@@ -101,11 +101,26 @@ export default function AdminSettingsPage() {
     setSuccessMessage('')
 
     try {
-      // Ayarları localStorage'a kaydet (gerçek projede API'ye gönderilir)
-      localStorage.setItem('siteSettings', JSON.stringify(settings))
-      
-      // Başarı mesajı göster
-      setSuccessMessage('Ayarlar başarıyla kaydedildi!')
+      // Ayarları API'ye gönder
+      const response = await fetch('/api/site-settings', {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(settings)
+      })
+
+      const result = await response.json()
+
+      if (result.success) {
+        // Başarı mesajı göster
+        setSuccessMessage('Ayarlar başarıyla kaydedildi ve Edge Config\'e gönderildi!')
+        
+        // Ayarları yeniden yükle
+        await loadSettingsFromEdgeConfig()
+      } else {
+        throw new Error(result.error || 'Ayarlar kaydedilemedi')
+      }
       
       // 3 saniye sonra mesajı temizle
       setTimeout(() => {
@@ -113,6 +128,7 @@ export default function AdminSettingsPage() {
       }, 3000)
     } catch (error) {
       console.error('Ayarlar kaydedilirken hata:', error)
+      setSuccessMessage('Hata: Ayarlar kaydedilemedi!')
     } finally {
       setIsLoading(false)
     }

@@ -3,7 +3,15 @@
 import { useState, useEffect } from 'react'
 import { ChevronLeft, ChevronRight } from 'lucide-react'
 
-const galleryImages = [
+interface GalleryImage {
+  id: string
+  src: string
+  alt: string
+  title: string
+  category: string
+}
+
+const defaultGalleryImages = [
   '/images/izmir_agac_dunyasi_001_8446a002.jpg',
   '/images/izmir_agac_dunyasi_002_4dae58b2.jpg',
   '/images/izmir_agac_dunyasi_003_52ba9d26.jpg',
@@ -21,10 +29,39 @@ const galleryImages = [
 export function PhotoGallery() {
   const [currentIndex, setCurrentIndex] = useState(0)
   const [isAutoPlaying, setIsAutoPlaying] = useState(true)
+  const [galleryImages, setGalleryImages] = useState<string[]>(defaultGalleryImages)
+  const [isLoading, setIsLoading] = useState(true)
+
+  // Load gallery images from API
+  useEffect(() => {
+    const loadGalleryImages = async () => {
+      try {
+        const response = await fetch('/api/gallery')
+        const result = await response.json()
+        
+        if (result.success && result.data && Array.isArray(result.data)) {
+          // API'den gelen verileri string array'e çevir
+          const imageUrls = result.data.map((img: GalleryImage) => img.src)
+          setGalleryImages(imageUrls)
+        } else {
+          // Fallback olarak varsayılan resimleri kullan
+          setGalleryImages(defaultGalleryImages)
+        }
+      } catch (error) {
+        console.error('Galeri resimleri yüklenirken hata:', error)
+        // Hata durumunda varsayılan resimleri kullan
+        setGalleryImages(defaultGalleryImages)
+      } finally {
+        setIsLoading(false)
+      }
+    }
+
+    loadGalleryImages()
+  }, [])
 
   // Auto-play functionality
   useEffect(() => {
-    if (!isAutoPlaying) return
+    if (!isAutoPlaying || isLoading) return
 
     const interval = setInterval(() => {
       setCurrentIndex((prevIndex) => 
@@ -33,7 +70,7 @@ export function PhotoGallery() {
     }, 4000)
 
     return () => clearInterval(interval)
-  }, [isAutoPlaying])
+  }, [isAutoPlaying, isLoading, galleryImages.length])
 
   const goToPrevious = () => {
     setCurrentIndex(currentIndex === 0 ? galleryImages.length - 1 : currentIndex - 1)

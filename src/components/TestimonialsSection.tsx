@@ -1,11 +1,60 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { Star, ChevronLeft, ChevronRight, Quote } from 'lucide-react'
-import { testimonials } from '@/data/testimonials'
+import { testimonials as defaultTestimonials } from '@/data/testimonials'
+
+interface ApiTestimonial {
+  id: string
+  name: string
+  location: string
+  rating: number
+  comment: string
+  date: string
+  project: string
+  approved: boolean
+}
 
 export function TestimonialsSection() {
   const [currentIndex, setCurrentIndex] = useState(0)
+  const [testimonials, setTestimonials] = useState(defaultTestimonials)
+  const [isLoading, setIsLoading] = useState(true)
+
+  // Load testimonials from API
+  useEffect(() => {
+    const loadTestimonials = async () => {
+      try {
+        const response = await fetch('/api/comments')
+        const result = await response.json()
+        
+        if (result.success && result.data && Array.isArray(result.data)) {
+          // API'den gelen verileri component formatına çevir
+          const apiTestimonials = result.data
+            .filter((item: ApiTestimonial) => item.approved)
+            .map((item: ApiTestimonial) => ({
+              id: parseInt(item.id),
+              name: item.name,
+              role: 'Müşteri',
+              content: item.comment,
+              rating: item.rating,
+              image: `https://trae-api-sg.mchost.guru/api/ide/v1/text_to_image?prompt=professional%20portrait%20of%20a%20happy%20Turkish%20person&image_size=square`,
+              location: item.location
+            }))
+          
+          if (apiTestimonials.length > 0) {
+            setTestimonials(apiTestimonials)
+          }
+        }
+      } catch (error) {
+        console.error('Yorumlar yüklenirken hata:', error)
+        // Hata durumunda varsayılan yorumları kullan
+      } finally {
+        setIsLoading(false)
+      }
+    }
+
+    loadTestimonials()
+  }, [])
 
   const nextTestimonial = () => {
     setCurrentIndex((prev) => (prev + 1) % testimonials.length)

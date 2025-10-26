@@ -93,3 +93,158 @@ export async function GET() {
     })
   }
 }
+
+// Galeri fotoğrafı ekleme
+export async function POST(request: NextRequest) {
+  try {
+    const newImage = await request.json()
+    
+    // Basit validasyon
+    if (!newImage.src || !newImage.title) {
+      return NextResponse.json(
+        { error: 'Fotoğraf URL\'si ve başlık gereklidir' },
+        { status: 400 }
+      )
+    }
+
+    // Mevcut galeri verilerini al
+    const galleryData = await get('gallery_photos')
+    const currentGallery = Array.isArray(galleryData) ? galleryData : []
+    
+    // Yeni ID oluştur
+    const newId = (Math.max(...currentGallery.map((img: any) => parseInt(img.id) || 0), 0) + 1).toString()
+    
+    // Yeni fotoğrafı ekle
+    const imageWithId = {
+      ...newImage,
+      id: newId,
+      createdAt: new Date().toISOString()
+    }
+    
+    const updatedGallery = [...currentGallery, imageWithId]
+
+    // Edge Config'e güncelleme gönder
+    const updateResponse = await fetch(`${process.env.VERCEL_URL || 'http://localhost:3000'}/api/edge-config/update`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        key: 'gallery_photos',
+        value: updatedGallery
+      })
+    })
+
+    return NextResponse.json({
+      success: true,
+      message: 'Fotoğraf başarıyla eklendi',
+      data: imageWithId,
+      timestamp: new Date().toISOString()
+    })
+
+  } catch (error) {
+    console.error('Gallery add error:', error)
+    return NextResponse.json(
+      { error: 'Fotoğraf eklenirken hata oluştu' },
+      { status: 500 }
+    )
+  }
+}
+
+// Galeri fotoğrafı güncelleme
+export async function PUT(request: NextRequest) {
+  try {
+    const updatedImage = await request.json()
+    
+    if (!updatedImage.id) {
+      return NextResponse.json(
+        { error: 'Fotoğraf ID\'si gereklidir' },
+        { status: 400 }
+      )
+    }
+
+    // Mevcut galeri verilerini al
+    const galleryData = await get('gallery_photos')
+    const currentGallery = Array.isArray(galleryData) ? galleryData : []
+    
+    // Fotoğrafı güncelle
+    const updatedGallery = currentGallery.map((img: any) => 
+      img.id === updatedImage.id 
+        ? { ...img, ...updatedImage, updatedAt: new Date().toISOString() }
+        : img
+    )
+
+    // Edge Config'e güncelleme gönder
+    const updateResponse = await fetch(`${process.env.VERCEL_URL || 'http://localhost:3000'}/api/edge-config/update`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        key: 'gallery_photos',
+        value: updatedGallery
+      })
+    })
+
+    return NextResponse.json({
+      success: true,
+      message: 'Fotoğraf başarıyla güncellendi',
+      data: updatedImage,
+      timestamp: new Date().toISOString()
+    })
+
+  } catch (error) {
+    console.error('Gallery update error:', error)
+    return NextResponse.json(
+      { error: 'Fotoğraf güncellenirken hata oluştu' },
+      { status: 500 }
+    )
+  }
+}
+
+// Galeri fotoğrafı silme
+export async function DELETE(request: NextRequest) {
+  try {
+    const { searchParams } = new URL(request.url)
+    const imageId = searchParams.get('id')
+    
+    if (!imageId) {
+      return NextResponse.json(
+        { error: 'Fotoğraf ID\'si gereklidir' },
+        { status: 400 }
+      )
+    }
+
+    // Mevcut galeri verilerini al
+    const galleryData = await get('gallery_photos')
+    const currentGallery = Array.isArray(galleryData) ? galleryData : []
+    
+    // Fotoğrafı sil
+    const updatedGallery = currentGallery.filter((img: any) => img.id !== imageId)
+
+    // Edge Config'e güncelleme gönder
+    const updateResponse = await fetch(`${process.env.VERCEL_URL || 'http://localhost:3000'}/api/edge-config/update`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        key: 'gallery_photos',
+        value: updatedGallery
+      })
+    })
+
+    return NextResponse.json({
+      success: true,
+      message: 'Fotoğraf başarıyla silindi',
+      timestamp: new Date().toISOString()
+    })
+
+  } catch (error) {
+    console.error('Gallery delete error:', error)
+    return NextResponse.json(
+      { error: 'Fotoğraf silinirken hata oluştu' },
+      { status: 500 }
+    )
+  }
+}

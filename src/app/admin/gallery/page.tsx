@@ -167,13 +167,29 @@ export default function AdminGalleryPage() {
     setIsUploading(false)
   }
 
-  const handleDeleteImage = (id: string) => {
+  const handleDeleteImage = async (id: string) => {
     if (confirm('Bu fotoğrafı silmek istediğinizden emin misiniz?')) {
-      setImages(prev => {
-        const updated = prev.filter(img => img.id !== id)
-        localStorage.setItem('galleryImages', JSON.stringify(updated))
-        return updated
-      })
+      try {
+        const response = await fetch('/api/gallery', {
+          method: 'DELETE',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ id })
+        })
+
+        const result = await response.json()
+
+        if (result.success) {
+          // Galeri verilerini yeniden yükle
+          await loadGalleryFromEdgeConfig()
+        } else {
+          alert('Fotoğraf silinemedi: ' + (result.error || 'Bilinmeyen hata'))
+        }
+      } catch (error) {
+        console.error('Fotoğraf silinirken hata:', error)
+        alert('Fotoğraf silinirken hata oluştu!')
+      }
     }
   }
 
