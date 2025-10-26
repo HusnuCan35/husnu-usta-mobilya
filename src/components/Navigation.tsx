@@ -7,11 +7,21 @@ import { Menu, X, Sun, Moon } from 'lucide-react'
 
 const navItems = [
   { href: '/', label: 'Ana Sayfa' },
-  { href: '/products', label: 'Ürünler' },
+  { href: '/#foto-galeri', label: 'Foto Galeri', isScroll: true },
   { href: '/about', label: 'Hakkımızda' },
   { href: '/blog', label: 'Blog' },
   { href: '/contact', label: 'İletişim' }
 ]
+
+const handleScrollToSection = (href: string) => {
+  if (href.startsWith('/#')) {
+    const sectionId = href.substring(2)
+    const element = document.getElementById(sectionId)
+    if (element) {
+      element.scrollIntoView({ behavior: 'smooth' })
+    }
+  }
+}
 
 export function Navigation() {
   const [isOpen, setIsOpen] = useState(false)
@@ -34,13 +44,23 @@ export function Navigation() {
           {/* Desktop Navigation */}
           <div className="hidden md:flex items-center space-x-8">
             {navItems.map((item) => (
-              <Link
-                key={item.href}
-                href={item.href}
-                className="text-gray-700 dark:text-gray-300 hover:text-primary dark:hover:text-accent transition-colors duration-200"
-              >
-                {item.label}
-              </Link>
+              item.isScroll ? (
+                <button
+                  key={item.href}
+                  onClick={() => handleScrollToSection(item.href)}
+                  className="text-gray-700 dark:text-gray-300 hover:text-primary dark:hover:text-accent transition-colors duration-200"
+                >
+                  {item.label}
+                </button>
+              ) : (
+                <Link
+                  key={item.href}
+                  href={item.href}
+                  className="text-gray-700 dark:text-gray-300 hover:text-primary dark:hover:text-accent transition-colors duration-200"
+                >
+                  {item.label}
+                </Link>
+              )
             ))}
             
             {/* Theme Toggle */}
@@ -90,14 +110,27 @@ export function Navigation() {
           <div className="md:hidden py-4 border-t border-gray-200 dark:border-gray-700">
             <div className="flex flex-col space-y-4">
               {navItems.map((item) => (
-                <Link
-                  key={item.href}
-                  href={item.href}
-                  className="text-gray-700 dark:text-gray-300 hover:text-primary dark:hover:text-accent transition-colors duration-200 py-2"
-                  onClick={() => setIsOpen(false)}
-                >
-                  {item.label}
-                </Link>
+                item.isScroll ? (
+                  <button
+                    key={item.href}
+                    onClick={() => {
+                      handleScrollToSection(item.href)
+                      setIsOpen(false)
+                    }}
+                    className="text-gray-700 dark:text-gray-300 hover:text-primary dark:hover:text-accent transition-colors duration-200 py-2 text-left"
+                  >
+                    {item.label}
+                  </button>
+                ) : (
+                  <Link
+                    key={item.href}
+                    href={item.href}
+                    className="text-gray-700 dark:text-gray-300 hover:text-primary dark:hover:text-accent transition-colors duration-200 py-2"
+                    onClick={() => setIsOpen(false)}
+                  >
+                    {item.label}
+                  </Link>
+                )
               ))}
             </div>
           </div>

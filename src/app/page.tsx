@@ -1,6 +1,5 @@
 import { HeroSection } from '@/components/HeroSection'
-import { CategoryGrid } from '@/components/CategoryGrid'
-import { FeaturedProducts } from '@/components/FeaturedProducts'
+import { PhotoGallery } from '@/components/PhotoGallery'
 import { AboutPreview } from '@/components/AboutPreview'
 import { TestimonialsSection } from '@/components/TestimonialsSection'
 import { StructuredData, organizationSchema, localBusinessSchema, websiteSchema } from '@/components/StructuredData'
@@ -14,8 +13,7 @@ export default function HomePage() {
       
       <div className="min-h-screen">
         <HeroSection />
-        <CategoryGrid />
-        <FeaturedProducts />
+        <PhotoGallery />
         <AboutPreview />
         <TestimonialsSection />
       </div>

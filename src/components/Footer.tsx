@@ -41,8 +41,8 @@ export function Footer() {
                 </Link>
               </li>
               <li>
-                <Link href="/products" className="text-gray-400 hover:text-accent transition-colors">
-                  Ürünler
+                <Link href="/#foto-galeri" className="text-gray-400 hover:text-accent transition-colors">
+                  Foto Galeri
                 </Link>
               </li>
               <li>
@@ -63,34 +63,24 @@ export function Footer() {
             </ul>
           </div>
 
-          {/* Product Categories */}
+          {/* Services */}
           <div className="space-y-4">
-            <h3 className="text-lg font-semibold">Ürün Kategorileri</h3>
+            <h3 className="text-lg font-semibold">Hizmetlerimiz</h3>
             <ul className="space-y-2">
               <li>
-                <Link href="/products?category=yatak-odasi" className="text-gray-400 hover:text-accent transition-colors">
-                  Yatak Odası
-                </Link>
+                <span className="text-gray-400">Özel Tasarım Mobilya</span>
               </li>
               <li>
-                <Link href="/products?category=oturma-grubu" className="text-gray-400 hover:text-accent transition-colors">
-                  Oturma Grubu
-                </Link>
+                <span className="text-gray-400">El İşçiliği</span>
               </li>
               <li>
-                <Link href="/products?category=yemek-odasi" className="text-gray-400 hover:text-accent transition-colors">
-                  Yemek Odası
-                </Link>
+                <span className="text-gray-400">Kaliteli Ahşap</span>
               </li>
               <li>
-                <Link href="/products?category=cocuk-odasi" className="text-gray-400 hover:text-accent transition-colors">
-                  Çocuk Odası
-                </Link>
+                <span className="text-gray-400">Ücretsiz Keşif</span>
               </li>
               <li>
-                <Link href="/products?category=ofis" className="text-gray-400 hover:text-accent transition-colors">
-                  Ofis Mobilyaları
-                </Link>
+                <span className="text-gray-400">Montaj Hizmeti</span>
               </li>
             </ul>
           </div>
