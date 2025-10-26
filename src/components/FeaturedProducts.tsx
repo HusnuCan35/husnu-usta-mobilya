@@ -43,7 +43,7 @@ export function FeaturedProducts() {
                     Detayları Gör
                   </Link>
                   <a
-                    href="https://wa.me/905555555555"
+                    href="https://wa.me/905363555860"
                     target="_blank"
                     rel="noopener noreferrer"
                     className="px-6 py-2 bg-green-500 hover:bg-green-600 text-white rounded-lg font-medium transition-colors"

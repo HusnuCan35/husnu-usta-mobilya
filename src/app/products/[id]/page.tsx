@@ -126,7 +126,7 @@ export default function ProductDetailPage() {
                 </div>
                 <div className="flex flex-col space-y-2">
                   <a
-                    href="https://wa.me/905555555555"
+                    href="https://wa.me/905363555860"
                     target="_blank"
                     rel="noopener noreferrer"
                     className="bg-green-500 hover:bg-green-600 text-white px-6 py-3 rounded-lg font-semibold transition-colors flex items-center space-x-2"
@@ -135,7 +135,7 @@ export default function ProductDetailPage() {
                     <span>WhatsApp</span>
                   </a>
                   <a
-                    href="tel:+905555555555"
+                    href="tel:+905363555860"
                     className="bg-primary hover:bg-primary/90 text-white px-6 py-3 rounded-lg font-semibold transition-colors flex items-center space-x-2"
                   >
                     <Phone className="w-5 h-5" />
@@ -187,7 +187,7 @@ export default function ProductDetailPage() {
             <div className="space-y-4">
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <a
-                  href="https://wa.me/905555555555"
+                  href="https://wa.me/905363555860"
                   target="_blank"
                   rel="noopener noreferrer"
                   className="bg-green-500 hover:bg-green-600 text-white px-6 py-3 rounded-lg font-semibold transition-colors flex items-center justify-center space-x-2"
@@ -196,7 +196,7 @@ export default function ProductDetailPage() {
                   <span>WhatsApp ile İletişim</span>
                 </a>
                 <a
-                  href="tel:+905555555555"
+                  href="tel:+905363555860"
                   className="bg-primary hover:bg-primary/90 text-white px-6 py-3 rounded-lg font-semibold transition-colors flex items-center justify-center space-x-2"
                 >
                   <Phone className="w-5 h-5" />

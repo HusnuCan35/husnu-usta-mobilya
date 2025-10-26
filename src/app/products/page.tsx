@@ -138,7 +138,7 @@ export default function ProductsPage() {
                   {/* Overlay Actions */}
                   <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center space-x-4">
                     <a
-                      href="https://wa.me/905555555555"
+                      href="https://wa.me/905363555860"
                       target="_blank"
                       rel="noopener noreferrer"
                       className="px-4 py-2 bg-green-500 hover:bg-green-600 text-white rounded-lg font-medium transition-colors"
@@ -238,7 +238,7 @@ export default function ProductsPage() {
 
                       <div className="flex items-center space-x-3">
                         <a
-                          href="https://wa.me/905555555555"
+                          href="https://wa.me/905363555860"
                           target="_blank"
                           rel="noopener noreferrer"
                           className="bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded-lg font-medium transition-colors"
