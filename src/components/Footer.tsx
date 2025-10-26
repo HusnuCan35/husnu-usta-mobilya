@@ -1,5 +1,5 @@
 import Link from 'next/link'
-import { Phone, Mail, MapPin, Facebook, Instagram, Twitter } from 'lucide-react'
+import { Phone, Mail, MapPin, Facebook, Instagram } from 'lucide-react'
 
 export function Footer() {
   return (
@@ -19,14 +19,11 @@ export function Footer() {
               Evinizi hayalinizdeki gibi dekore etmenize yardımcı oluyoruz.
             </p>
             <div className="flex space-x-4">
-              <a href="#" className="text-gray-400 hover:text-accent transition-colors">
+              <a href="https://www.facebook.com/husnuustamobilya" target="_blank" rel="noopener noreferrer" className="text-gray-400 hover:text-accent transition-colors">
                 <Facebook className="w-5 h-5" />
               </a>
-              <a href="#" className="text-gray-400 hover:text-accent transition-colors">
+              <a href="https://www.instagram.com/izmir_agac_dunyasi/" target="_blank" rel="noopener noreferrer" className="text-gray-400 hover:text-accent transition-colors">
                 <Instagram className="w-5 h-5" />
-              </a>
-              <a href="#" className="text-gray-400 hover:text-accent transition-colors">
-                <Twitter className="w-5 h-5" />
               </a>
             </div>
           </div>
@@ -91,18 +88,23 @@ export function Footer() {
             <div className="space-y-3">
               <div className="flex items-center space-x-3">
                 <Phone className="w-5 h-5 text-accent" />
-                <span className="text-gray-400">0536 355 58 60</span>
+                <a href="tel:+905363555860" className="text-gray-400 hover:text-accent transition-colors">0536 355 58 60</a>
               </div>
               <div className="flex items-center space-x-3">
                 <Mail className="w-5 h-5 text-accent" />
-                <span className="text-gray-400">info@husnuustamobilya.com</span>
+                <a href="mailto:husnuisiktas@gmail.com" className="text-gray-400 hover:text-accent transition-colors">husnuisiktas@gmail.com</a>
               </div>
               <div className="flex items-start space-x-3">
                 <MapPin className="w-5 h-5 text-accent mt-1" />
-                <span className="text-gray-400">
+                <a 
+                  href="https://www.google.com/maps/search/Hüsnü+Usta+Mobilya+Çınarlı+1569.+Sk.+No:2+35170+Konak+İzmir" 
+                  target="_blank" 
+                  rel="noopener noreferrer" 
+                  className="text-gray-400 hover:text-accent transition-colors"
+                >
                   Çınarlı, 1569. Sk. No:2<br />
                   35170 Konak / İzmir
-                </span>
+                </a>
               </div>
             </div>
           </div>
