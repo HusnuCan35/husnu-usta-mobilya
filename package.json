@@ -13,6 +13,7 @@
     "check": "tsc --noEmit"
   },
   "dependencies": {
+    "@vercel/edge-config": "^1.4.3",
     "@vercel/speed-insights": "^1.2.0",
     "clsx": "^2.1.1",
     "lucide-react": "^0.511.0",
