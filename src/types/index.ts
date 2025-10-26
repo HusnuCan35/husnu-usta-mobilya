@@ -18,7 +18,7 @@ export interface Product {
   category: ProductCategory
   featured_image: string
   images: string[]
-  price: number
+  price?: number
   discountedPrice?: number
   discount?: number
   rating: number
@@ -37,6 +37,7 @@ export interface Product {
   tags: string[]
   createdAt: string
   updatedAt: string
+  contactForPrice?: boolean
 }
 
 export interface BlogPost {

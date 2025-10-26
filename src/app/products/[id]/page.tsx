@@ -3,7 +3,7 @@
 import { useState } from 'react'
 import { useParams } from 'next/navigation'
 import Link from 'next/link'
-import { Star, Heart, ShoppingCart, ArrowLeft, Truck, Shield, Award, Phone } from 'lucide-react'
+import { Star, Heart, ShoppingCart, ArrowLeft, ArrowRight, Truck, Shield, Award, Phone } from 'lucide-react'
 import { products } from '@/data/products'
 
 
@@ -113,25 +113,36 @@ export default function ProductDetailPage() {
               {product.name}
             </h1>
 
-            {/* Price */}
-            <div className="flex items-center space-x-4">
-              {product.discount ? (
-                <>
-                  <span className="text-3xl font-bold text-accent">
-                    ₺{product.discountedPrice?.toLocaleString()}
-                  </span>
-                  <span className="text-xl text-gray-500 line-through">
-                    ₺{product.price.toLocaleString()}
-                  </span>
-                  <span className="bg-red-500 text-white text-sm font-semibold px-3 py-1 rounded-full">
-                    %{product.discount} İndirim
-                  </span>
-                </>
-              ) : (
-                <span className="text-3xl font-bold text-accent">
-                  ₺{product.price.toLocaleString()}
-                </span>
-              )}
+            {/* Contact for Price */}
+            <div className="bg-gradient-to-r from-accent/10 to-primary/10 rounded-lg p-6">
+              <div className="flex items-center justify-between">
+                <div>
+                  <h3 className="text-2xl font-bold text-accent mb-2">
+                    Fiyat için iletişime geçin
+                  </h3>
+                  <p className="text-text-secondary dark:text-gray-300">
+                    En uygun fiyat teklifimiz için bize ulaşın
+                  </p>
+                </div>
+                <div className="flex flex-col space-y-2">
+                  <a
+                    href="https://wa.me/905555555555"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="bg-green-500 hover:bg-green-600 text-white px-6 py-3 rounded-lg font-semibold transition-colors flex items-center space-x-2"
+                  >
+                    <Phone className="w-5 h-5" />
+                    <span>WhatsApp</span>
+                  </a>
+                  <a
+                    href="tel:+905555555555"
+                    className="bg-primary hover:bg-primary/90 text-white px-6 py-3 rounded-lg font-semibold transition-colors flex items-center space-x-2"
+                  >
+                    <Phone className="w-5 h-5" />
+                    <span>Ara</span>
+                  </a>
+                </div>
+              </div>
             </div>
 
             {/* Description */}
@@ -172,40 +183,35 @@ export default function ProductDetailPage() {
               </ul>
             </div>
 
-            {/* Quantity & Actions */}
+            {/* Contact Actions */}
             <div className="space-y-4">
-              <div className="flex items-center space-x-4">
-                <label className="text-text-primary dark:text-white font-medium">
-                  Adet:
-                </label>
-                <div className="flex items-center border border-gray-300 dark:border-gray-600 rounded-lg">
-                  <button
-                    onClick={() => setQuantity(Math.max(1, quantity - 1))}
-                    className="px-3 py-2 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
-                  >
-                    -
-                  </button>
-                  <span className="px-4 py-2 text-text-primary dark:text-white">
-                    {quantity}
-                  </span>
-                  <button
-                    onClick={() => setQuantity(quantity + 1)}
-                    className="px-3 py-2 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
-                  >
-                    +
-                  </button>
-                </div>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <a
+                  href="https://wa.me/905555555555"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="bg-green-500 hover:bg-green-600 text-white px-6 py-3 rounded-lg font-semibold transition-colors flex items-center justify-center space-x-2"
+                >
+                  <Phone className="w-5 h-5" />
+                  <span>WhatsApp ile İletişim</span>
+                </a>
+                <a
+                  href="tel:+905555555555"
+                  className="bg-primary hover:bg-primary/90 text-white px-6 py-3 rounded-lg font-semibold transition-colors flex items-center justify-center space-x-2"
+                >
+                  <Phone className="w-5 h-5" />
+                  <span>Telefon ile Ara</span>
+                </a>
               </div>
-
-              <div className="flex flex-col sm:flex-row gap-4">
-                <button className="flex-1 bg-accent hover:bg-accent/90 text-white px-6 py-3 rounded-lg font-semibold transition-colors flex items-center justify-center space-x-2">
-                  <ShoppingCart className="w-5 h-5" />
-                  <span>Sepete Ekle</span>
-                </button>
-                <button className="px-6 py-3 border-2 border-gray-300 dark:border-gray-600 hover:border-accent dark:hover:border-accent text-text-primary dark:text-white rounded-lg font-semibold transition-colors flex items-center justify-center space-x-2">
-                  <Heart className="w-5 h-5" />
-                  <span>Favorilere Ekle</span>
-                </button>
+              
+              <div className="text-center">
+                <a
+                  href="/contact"
+                  className="inline-flex items-center space-x-2 text-accent hover:text-accent/80 font-medium transition-colors"
+                >
+                  <span>Detaylı bilgi için iletişim sayfamızı ziyaret edin</span>
+                  <ArrowRight className="w-4 h-4" />
+                </a>
               </div>
             </div>
 
@@ -290,14 +296,13 @@ export default function ProductDetailPage() {
                       {relatedProduct.name}
                     </h3>
                     <div className="flex items-center justify-between">
-                      <span className="text-lg font-bold text-accent">
-                        ₺{relatedProduct.price.toLocaleString()}
+                      <span className="text-sm font-bold text-accent">
+                        Fiyat için iletişime geçin
                       </span>
                       <div className="flex items-center space-x-1">
                         <Star className="w-4 h-4 text-yellow-400 fill-current" />
                         <span className="text-sm text-gray-600 dark:text-gray-400">
-                          {relatedProduct.rating}
-                        </span>
+                          {relatedProduct.rating}</span>
                       </div>
                     </div>
                   </div>

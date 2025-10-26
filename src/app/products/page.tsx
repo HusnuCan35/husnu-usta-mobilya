@@ -10,26 +10,19 @@ export default function ProductsPage() {
   const [selectedCategory, setSelectedCategory] = useState('all')
   const [sortBy, setSortBy] = useState('name')
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid')
-  const [priceRange, setPriceRange] = useState<[number, number]>([0, 100000])
-
   // Filter and sort products
   const filteredProducts = useMemo(() => {
     let filtered = products.filter(product => {
       const matchesSearch = product.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
                            product.description.toLowerCase().includes(searchTerm.toLowerCase())
       const matchesCategory = selectedCategory === 'all' || product.category.slug === selectedCategory
-      const matchesPrice = product.price >= priceRange[0] && product.price <= priceRange[1]
       
-      return matchesSearch && matchesCategory && matchesPrice
+      return matchesSearch && matchesCategory
     })
 
     // Sort products
     filtered.sort((a, b) => {
       switch (sortBy) {
-        case 'price-low':
-          return a.price - b.price
-        case 'price-high':
-          return b.price - a.price
         case 'rating':
           return b.rating - a.rating
         case 'name':
@@ -39,7 +32,7 @@ export default function ProductsPage() {
     })
 
     return filtered
-  }, [searchTerm, selectedCategory, sortBy, priceRange])
+  }, [searchTerm, selectedCategory, sortBy])
 
   return (
     <div className="min-h-screen bg-background-primary dark:bg-gray-900 py-8">
@@ -90,8 +83,6 @@ export default function ProductsPage() {
               className="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-accent focus:border-transparent bg-white dark:bg-gray-700 text-text-primary dark:text-white"
             >
               <option value="name">İsme Göre</option>
-              <option value="price-low">Fiyat (Düşük-Yüksek)</option>
-              <option value="price-high">Fiyat (Yüksek-Düşük)</option>
               <option value="rating">Puana Göre</option>
             </select>
 
@@ -146,26 +137,26 @@ export default function ProductsPage() {
                   
                   {/* Overlay Actions */}
                   <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center space-x-4">
-                    <button className="p-3 bg-white/20 backdrop-blur-sm rounded-full hover:bg-white/30 transition-colors">
-                      <Heart className="w-5 h-5 text-white" />
-                    </button>
+                    <a
+                      href="https://wa.me/905555555555"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="px-4 py-2 bg-green-500 hover:bg-green-600 text-white rounded-lg font-medium transition-colors"
+                    >
+                      WhatsApp
+                    </a>
                     <Link
                       href={`/products/${product.id}`}
                       className="px-4 py-2 bg-accent hover:bg-accent/90 text-white rounded-lg font-medium transition-colors"
                     >
                       Detay
                     </Link>
-                    <button className="p-3 bg-white/20 backdrop-blur-sm rounded-full hover:bg-white/30 transition-colors">
-                      <ShoppingCart className="w-5 h-5 text-white" />
-                    </button>
                   </div>
 
-                  {/* Discount Badge */}
-                  {product.discount && (
-                    <div className="absolute top-4 left-4 bg-red-500 text-white text-sm font-semibold px-3 py-1 rounded-full">
-                      %{product.discount} İndirim
-                    </div>
-                  )}
+                  {/* Handcrafted Badge */}
+                  <div className="absolute top-4 left-4 bg-amber-600 text-white text-sm font-semibold px-3 py-1 rounded-full">
+                    El İşçiliği
+                  </div>
                 </div>
 
                 {/* Product Info */}
@@ -186,23 +177,12 @@ export default function ProductsPage() {
                     {product.name}
                   </h3>
 
-                  {/* Price */}
+                  {/* Contact for Price */}
                   <div className="flex items-center justify-between">
                     <div className="flex items-center space-x-2">
-                      {product.discount ? (
-                        <>
-                          <span className="text-lg font-bold text-accent">
-                            ₺{product.discountedPrice?.toLocaleString()}
-                          </span>
-                          <span className="text-sm text-gray-500 line-through">
-                            ₺{product.price.toLocaleString()}
-                          </span>
-                        </>
-                      ) : (
-                        <span className="text-lg font-bold text-accent">
-                          ₺{product.price.toLocaleString()}
-                        </span>
-                      )}
+                      <span className="text-lg font-bold text-accent">
+                        Fiyat için iletişime geçin
+                      </span>
                     </div>
                   </div>
                 </div>
@@ -251,28 +231,27 @@ export default function ProductsPage() {
 
                     <div className="flex items-center justify-between">
                       <div className="flex items-center space-x-2">
-                        {product.discount ? (
-                          <>
-                            <span className="text-xl font-bold text-accent">
-                              ₺{product.discountedPrice?.toLocaleString()}
-                            </span>
-                            <span className="text-sm text-gray-500 line-through">
-                              ₺{product.price.toLocaleString()}
-                            </span>
-                          </>
-                        ) : (
-                          <span className="text-xl font-bold text-accent">
-                            ₺{product.price.toLocaleString()}
-                          </span>
-                        )}
+                        <span className="text-xl font-bold text-accent">
+                          Fiyat için iletişime geçin
+                        </span>
                       </div>
 
-                      <Link
-                        href={`/products/${product.id}`}
-                        className="bg-primary hover:bg-primary/90 text-white px-6 py-2 rounded-lg font-medium transition-colors"
-                      >
-                        Detayları Gör
-                      </Link>
+                      <div className="flex items-center space-x-3">
+                        <a
+                          href="https://wa.me/905555555555"
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded-lg font-medium transition-colors"
+                        >
+                          WhatsApp
+                        </a>
+                        <Link
+                          href={`/products/${product.id}`}
+                          className="bg-primary hover:bg-primary/90 text-white px-6 py-2 rounded-lg font-medium transition-colors"
+                        >
+                          Detayları Gör
+                        </Link>
+                      </div>
                     </div>
                   </div>
                 </div>

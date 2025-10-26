@@ -36,26 +36,26 @@ export function FeaturedProducts() {
                 
                 {/* Overlay Actions */}
                 <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center space-x-4">
-                  <button className="p-3 bg-white/20 backdrop-blur-sm rounded-full hover:bg-white/30 transition-colors">
-                    <Heart className="w-5 h-5 text-white" />
-                  </button>
                   <Link
                     href={`/products/${product.id}`}
                     className="px-6 py-2 bg-accent hover:bg-accent/90 text-white rounded-lg font-medium transition-colors"
                   >
                     Detayları Gör
                   </Link>
-                  <button className="p-3 bg-white/20 backdrop-blur-sm rounded-full hover:bg-white/30 transition-colors">
-                    <ShoppingCart className="w-5 h-5 text-white" />
-                  </button>
+                  <a
+                    href="https://wa.me/905555555555"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="px-6 py-2 bg-green-500 hover:bg-green-600 text-white rounded-lg font-medium transition-colors"
+                  >
+                    İletişim
+                  </a>
                 </div>
 
-                {/* Discount Badge */}
-                {product.discount && (
-                  <div className="absolute top-4 left-4 bg-red-500 text-white text-sm font-semibold px-3 py-1 rounded-full">
-                    %{product.discount} İndirim
-                  </div>
-                )}
+                {/* Handcrafted Badge */}
+                <div className="absolute top-4 left-4 bg-amber-600 text-white text-sm font-semibold px-3 py-1 rounded-full">
+                  El İşçiliği
+                </div>
               </div>
 
               {/* Product Info */}
@@ -80,24 +80,11 @@ export function FeaturedProducts() {
                   {product.description}
                 </p>
 
-                {/* Price */}
+                {/* Contact for Price */}
                 <div className="flex items-center justify-between">
-                  <div className="flex items-center space-x-2">
-                    {product.discount ? (
-                      <>
-                        <span className="text-lg font-bold text-accent">
-                          ₺{product.discountedPrice?.toLocaleString()}
-                        </span>
-                        <span className="text-sm text-gray-500 line-through">
-                          ₺{product.price.toLocaleString()}
-                        </span>
-                      </>
-                    ) : (
-                      <span className="text-lg font-bold text-accent">
-                        ₺{product.price.toLocaleString()}
-                      </span>
-                    )}
-                  </div>
+                  <span className="text-lg font-bold text-accent">
+                    Fiyat için iletişime geçin
+                  </span>
 
                   <Link
                     href={`/products/${product.id}`}
