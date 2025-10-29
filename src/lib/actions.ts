@@ -418,3 +418,299 @@ export async function deleteComment(id: string) {
     }
   }
 }
+
+// User Management Actions
+export async function getUsers() {
+  try {
+    const { data, error } = await supabase
+      .from('users')
+      .select('*')
+      .order('created_at', { ascending: false })
+
+    if (error) {
+      console.error('Kullanıcılar yüklenirken hata:', error)
+      return {
+        success: false,
+        data: null,
+        error: error.message
+      }
+    }
+
+    return {
+      success: true,
+      data: data,
+      error: null
+    }
+  } catch (error) {
+    console.error('Kullanıcılar yüklenirken hata:', error)
+    return {
+      success: false,
+      data: null,
+      error: 'Kullanıcılar yüklenemedi'
+    }
+  }
+}
+
+export async function addUser(formData: FormData) {
+  try {
+    const name = formData.get('name') as string
+    const email = formData.get('email') as string
+    const role = formData.get('role') as string
+    const phone = formData.get('phone') as string
+    const bio = formData.get('bio') as string
+    const avatar_url = formData.get('avatar_url') as string
+
+    if (!name || !email) {
+      return {
+        success: false,
+        data: null,
+        error: 'Ad ve email alanları zorunludur'
+      }
+    }
+
+    const { data, error } = await supabase
+      .from('users')
+      .insert([{
+        name,
+        email,
+        role: role || 'user',
+        phone,
+        bio,
+        avatar_url: avatar_url || `https://trae-api-sg.mchost.guru/api/ide/v1/text_to_image?prompt=professional%20portrait%20of%20${encodeURIComponent(name)}&image_size=square`,
+        is_active: true
+      }])
+      .select()
+      .single()
+
+    if (error) {
+      console.error('Kullanıcı eklenirken hata:', error)
+      return {
+        success: false,
+        data: null,
+        error: error.message
+      }
+    }
+
+    revalidatePath('/admin/users')
+    revalidatePath('/admin')
+
+    return {
+      success: true,
+      data: data,
+      error: null
+    }
+  } catch (error) {
+    console.error('Kullanıcı eklenirken hata:', error)
+    return {
+      success: false,
+      data: null,
+      error: 'Kullanıcı eklenemedi'
+    }
+  }
+}
+
+export async function updateUser(formData: FormData) {
+  try {
+    const id = formData.get('id') as string
+    const name = formData.get('name') as string
+    const email = formData.get('email') as string
+    const role = formData.get('role') as string
+    const phone = formData.get('phone') as string
+    const bio = formData.get('bio') as string
+    const avatar_url = formData.get('avatar_url') as string
+    const is_active = formData.get('is_active') === 'true'
+
+    if (!id || !name || !email) {
+      return {
+        success: false,
+        data: null,
+        error: 'ID, ad ve email alanları zorunludur'
+      }
+    }
+
+    const { data, error } = await supabase
+      .from('users')
+      .update({
+        name,
+        email,
+        role,
+        phone,
+        bio,
+        avatar_url,
+        is_active
+      })
+      .eq('id', id)
+      .select()
+      .single()
+
+    if (error) {
+      console.error('Kullanıcı güncellenirken hata:', error)
+      return {
+        success: false,
+        data: null,
+        error: error.message
+      }
+    }
+
+    revalidatePath('/admin/users')
+    revalidatePath('/admin')
+
+    return {
+      success: true,
+      data: data,
+      error: null
+    }
+  } catch (error) {
+    console.error('Kullanıcı güncellenirken hata:', error)
+    return {
+      success: false,
+      data: null,
+      error: 'Kullanıcı güncellenemedi'
+    }
+  }
+}
+
+export async function deleteUser(id: string) {
+  try {
+    if (!id) {
+      return {
+        success: false,
+        data: null,
+        error: 'Kullanıcı ID gerekli'
+      }
+    }
+
+    const { error } = await supabase
+      .from('users')
+      .delete()
+      .eq('id', id)
+
+    if (error) {
+      console.error('Kullanıcı silinirken hata:', error)
+      return {
+        success: false,
+        data: null,
+        error: error.message
+      }
+    }
+
+    revalidatePath('/admin/users')
+    revalidatePath('/admin')
+
+    return {
+      success: true,
+      data: null,
+      error: null
+    }
+  } catch (error) {
+    console.error('Kullanıcı silinirken hata:', error)
+    return {
+      success: false,
+      data: null,
+      error: 'Kullanıcı silinemedi'
+    }
+  }
+}
+
+export async function updateUserLastLogin(id: string) {
+  try {
+    const { error } = await supabase
+      .from('users')
+      .update({ last_login: new Date().toISOString() })
+      .eq('id', id)
+
+    if (error) {
+      console.error('Son giriş zamanı güncellenirken hata:', error)
+    }
+  } catch (error) {
+    console.error('Son giriş zamanı güncellenirken hata:', error)
+  }
+}
+
+// Statistics Actions
+export async function getStats() {
+  try {
+    // Get total users count
+    const { count: usersCount, error: usersError } = await supabase
+      .from('users')
+      .select('*', { count: 'exact', head: true })
+
+    // Get total comments count
+    const { count: commentsCount, error: commentsError } = await supabase
+      .from('comments')
+      .select('*', { count: 'exact', head: true })
+
+    // Get total gallery images count
+    const { count: galleryCount, error: galleryError } = await supabase
+      .from('gallery')
+      .select('*', { count: 'exact', head: true })
+
+    // Get approved comments count
+    const { count: approvedCommentsCount, error: approvedCommentsError } = await supabase
+      .from('comments')
+      .select('*', { count: 'exact', head: true })
+      .eq('approved', true)
+
+    // Get this month's content count
+    const startOfMonth = new Date()
+    startOfMonth.setDate(1)
+    startOfMonth.setHours(0, 0, 0, 0)
+
+    const { count: thisMonthComments, error: thisMonthCommentsError } = await supabase
+      .from('comments')
+      .select('*', { count: 'exact', head: true })
+      .gte('created_at', startOfMonth.toISOString())
+
+    const { count: thisMonthGallery, error: thisMonthGalleryError } = await supabase
+      .from('gallery')
+      .select('*', { count: 'exact', head: true })
+      .gte('created_at', startOfMonth.toISOString())
+
+    const { count: thisMonthUsers, error: thisMonthUsersError } = await supabase
+      .from('users')
+      .select('*', { count: 'exact', head: true })
+      .gte('created_at', startOfMonth.toISOString())
+
+    if (usersError || commentsError || galleryError || approvedCommentsError || 
+        thisMonthCommentsError || thisMonthGalleryError || thisMonthUsersError) {
+      console.error('İstatistikler yüklenirken hata:', {
+        usersError,
+        commentsError,
+        galleryError,
+        approvedCommentsError,
+        thisMonthCommentsError,
+        thisMonthGalleryError,
+        thisMonthUsersError
+      })
+      return {
+        success: false,
+        data: null,
+        error: 'İstatistikler yüklenemedi'
+      }
+    }
+
+    const stats = {
+      totalUsers: usersCount || 0,
+      totalComments: commentsCount || 0,
+      totalGalleryImages: galleryCount || 0,
+      approvedComments: approvedCommentsCount || 0,
+      thisMonthContent: (thisMonthComments || 0) + (thisMonthGallery || 0) + (thisMonthUsers || 0),
+      thisMonthComments: thisMonthComments || 0,
+      thisMonthGallery: thisMonthGallery || 0,
+      thisMonthUsers: thisMonthUsers || 0
+    }
+
+    return {
+      success: true,
+      data: stats,
+      error: null
+    }
+  } catch (error) {
+    console.error('İstatistikler yüklenirken hata:', error)
+    return {
+      success: false,
+      data: null,
+      error: 'İstatistikler yüklenemedi'
+    }
+  }
+}

@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
+import { getStats } from '@/lib/actions'
 import { 
   LayoutDashboard, 
   Settings, 
@@ -15,22 +16,41 @@ import {
   Home,
   Eye,
   ThumbsUp,
-  Camera
+  Camera,
+  TrendingUp
 } from 'lucide-react'
 
 export default function AdminDashboard() {
   const [isAuthenticated, setIsAuthenticated] = useState(false)
   const [sidebarOpen, setSidebarOpen] = useState(false)
+  const [stats, setStats] = useState({
+    totalUsers: 0,
+    totalComments: 0,
+    totalGalleryImages: 0,
+    approvedComments: 0,
+    thisMonthContent: 0
+  })
+  const [loading, setLoading] = useState(true)
   const router = useRouter()
 
   useEffect(() => {
     const auth = localStorage.getItem('adminAuth')
     if (auth === 'true') {
       setIsAuthenticated(true)
+      loadStats()
     } else {
       router.push('/admin/login')
     }
   }, [router])
+
+  const loadStats = async () => {
+    setLoading(true)
+    const result = await getStats()
+    if (result.success && result.data) {
+      setStats(result.data)
+    }
+    setLoading(false)
+  }
 
   const handleLogout = () => {
     // LocalStorage'dan auth bilgisini kaldır
@@ -58,11 +78,35 @@ export default function AdminDashboard() {
     { icon: Users, label: 'Kullanıcılar', href: '/admin/users' },
   ]
 
-  const stats = [
-    { label: 'Toplam Ziyaretçi', value: '12,543', icon: Eye, color: 'bg-blue-500' },
-    { label: 'Foto Galeri', value: '156', icon: Camera, color: 'bg-green-500' },
-    { label: 'Onaylı Yorumlar', value: '89', icon: ThumbsUp, color: 'bg-purple-500' },
-    { label: 'Aktif Ürünler', value: '45', icon: BarChart3, color: 'bg-orange-500' },
+  const statsCards = [
+    { 
+      label: 'Toplam Kullanıcı', 
+      value: stats.totalUsers.toString(), 
+      icon: Users, 
+      color: 'bg-blue-500',
+      href: '/admin/users'
+    },
+    { 
+      label: 'Foto Galeri', 
+      value: stats.totalGalleryImages.toString(), 
+      icon: Camera, 
+      color: 'bg-green-500',
+      href: '/admin/gallery'
+    },
+    { 
+      label: 'Onaylı Yorumlar', 
+      value: stats.approvedComments.toString(), 
+      icon: ThumbsUp, 
+      color: 'bg-purple-500',
+      href: '/admin/comments'
+    },
+    { 
+      label: 'Bu Ay Eklenen', 
+      value: stats.thisMonthContent.toString(), 
+      icon: TrendingUp, 
+      color: 'bg-orange-500',
+      href: '/admin'
+    },
   ]
 
   return (
@@ -161,23 +205,44 @@ export default function AdminDashboard() {
 
           {/* Stats Grid */}
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-            {stats.map((stat, index) => (
-              <div key={index} className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6">
-                <div className="flex items-center">
-                  <div className={`p-3 rounded-xl ${stat.color}`}>
-                    <stat.icon className="w-6 h-6 text-white" />
-                  </div>
-                  <div className="ml-4">
-                    <p className="text-sm font-medium text-gray-600 dark:text-gray-400">
-                      {stat.label}
-                    </p>
-                    <p className="text-2xl font-bold text-gray-900 dark:text-white">
-                      {stat.value}
-                    </p>
+            {loading ? (
+              // Loading skeleton
+              Array.from({ length: 4 }).map((_, index) => (
+                <div key={index} className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6">
+                  <div className="flex items-center">
+                    <div className="p-3 rounded-xl bg-gray-200 dark:bg-gray-700 animate-pulse">
+                      <div className="w-6 h-6 bg-gray-300 dark:bg-gray-600 rounded"></div>
+                    </div>
+                    <div className="ml-4 flex-1">
+                      <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded animate-pulse mb-2"></div>
+                      <div className="h-8 bg-gray-200 dark:bg-gray-700 rounded animate-pulse"></div>
+                    </div>
                   </div>
                 </div>
-              </div>
-            ))}
+              ))
+            ) : (
+              statsCards.map((stat, index) => (
+                <a
+                  key={index}
+                  href={stat.href}
+                  className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6 hover:shadow-md transition-all duration-200 hover:scale-105 cursor-pointer group"
+                >
+                  <div className="flex items-center">
+                    <div className={`p-3 rounded-xl ${stat.color} group-hover:scale-110 transition-transform duration-200`}>
+                      <stat.icon className="w-6 h-6 text-white" />
+                    </div>
+                    <div className="ml-4">
+                      <p className="text-sm font-medium text-gray-600 dark:text-gray-400 group-hover:text-gray-700 dark:group-hover:text-gray-300 transition-colors duration-200">
+                        {stat.label}
+                      </p>
+                      <p className="text-2xl font-bold text-gray-900 dark:text-white group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors duration-200">
+                        {stat.value}
+                      </p>
+                    </div>
+                  </div>
+                </a>
+              ))
+            )}
           </div>
 
           {/* Quick Actions */}
