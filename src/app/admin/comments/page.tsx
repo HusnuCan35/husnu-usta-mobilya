@@ -5,16 +5,15 @@ import { useRouter } from 'next/navigation'
 import { 
   ArrowLeft, 
   MessageSquare, 
+  Star, 
   Check, 
   X, 
   Trash2, 
-  Search,
-  Filter,
-  Star,
   Clock,
   User,
-  Calendar
+  Mail
 } from 'lucide-react'
+import { getComments, updateCommentStatus, deleteComment } from '@/lib/actions'
 
 interface Comment {
   id: string
@@ -23,137 +22,94 @@ interface Comment {
   message: string
   rating: number
   status: 'pending' | 'approved' | 'rejected'
-  date: string
-  product?: string
+  created_at: string
 }
 
 export default function AdminCommentsPage() {
   const [isAuthenticated, setIsAuthenticated] = useState(false)
   const [comments, setComments] = useState<Comment[]>([])
-  const [searchTerm, setSearchTerm] = useState('')
-  const [statusFilter, setStatusFilter] = useState<'all' | 'pending' | 'approved' | 'rejected'>('all')
+  const [isLoading, setIsLoading] = useState(true)
+  const [filter, setFilter] = useState<'all' | 'pending' | 'approved' | 'rejected'>('all')
   const router = useRouter()
-
-  // Örnek yorum verileri
-  const sampleComments: Comment[] = [
-    {
-      id: '1',
-      name: 'Ahmet Yılmaz',
-      email: 'ahmet@example.com',
-      message: 'Çok kaliteli işçilik, yatak odası takımımızdan çok memnunuz. Herkese tavsiye ederim.',
-      rating: 5,
-      status: 'approved',
-      date: '2024-01-15T10:30:00Z',
-      product: 'Yatak Odası Takımı'
-    },
-    {
-      id: '2',
-      name: 'Fatma Demir',
-      email: 'fatma@example.com',
-      message: 'Mutfak dolabımız harika oldu. Ölçüler tam uydu ve malzeme kalitesi çok iyi.',
-      rating: 5,
-      status: 'approved',
-      date: '2024-01-14T14:20:00Z',
-      product: 'Mutfak Dolabı'
-    },
-    {
-      id: '3',
-      name: 'Mehmet Kaya',
-      email: 'mehmet@example.com',
-      message: 'Hizmet çok güzeldi, zamanında teslim ettiler. Teşekkürler.',
-      rating: 4,
-      status: 'pending',
-      date: '2024-01-13T16:45:00Z'
-    },
-    {
-      id: '4',
-      name: 'Ayşe Özkan',
-      email: 'ayse@example.com',
-      message: 'Salon takımımız çok şık oldu. Arkadaşlarım çok beğendi.',
-      rating: 5,
-      status: 'pending',
-      date: '2024-01-12T09:15:00Z',
-      product: 'Salon Takımı'
-    },
-    {
-      id: '5',
-      name: 'Ali Çelik',
-      email: 'ali@example.com',
-      message: 'Fiyat performans açısından çok iyi. Kaliteli malzeme kullanıyorlar.',
-      rating: 4,
-      status: 'approved',
-      date: '2024-01-11T11:30:00Z'
-    }
-  ]
 
   useEffect(() => {
     const auth = localStorage.getItem('adminAuth')
     if (auth === 'true') {
       setIsAuthenticated(true)
-      // Mevcut yorum verilerini yükle
-      const savedComments = localStorage.getItem('comments')
-      if (savedComments) {
-        setComments(JSON.parse(savedComments))
-      } else {
-        setComments(sampleComments)
-        localStorage.setItem('comments', JSON.stringify(sampleComments))
-      }
+      loadComments()
     } else {
       router.push('/admin/login')
     }
   }, [router])
 
-  const filteredComments = comments.filter(comment => {
-    const matchesSearch = comment.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         comment.message.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         comment.email.toLowerCase().includes(searchTerm.toLowerCase())
-    const matchesStatus = statusFilter === 'all' || comment.status === statusFilter
-    return matchesSearch && matchesStatus
-  })
-
-  const updateCommentStatus = (id: string, status: 'approved' | 'rejected') => {
-    setComments(prev => {
-      const updated = prev.map(comment => 
-        comment.id === id ? { ...comment, status } : comment
-      )
-      localStorage.setItem('comments', JSON.stringify(updated))
-      return updated
-    })
-  }
-
-  const deleteComment = (id: string) => {
-    if (confirm('Bu yorumu silmek istediğinizden emin misiniz?')) {
-      setComments(prev => {
-        const updated = prev.filter(comment => comment.id !== id)
-        localStorage.setItem('comments', JSON.stringify(updated))
-        return updated
-      })
+  const loadComments = async () => {
+    setIsLoading(true)
+    try {
+      const result = await getComments()
+      if (result.success) {
+        setComments(result.data)
+      } else {
+        console.error('Yorumlar yüklenirken hata:', result.error)
+      }
+    } catch (error) {
+      console.error('Yorumlar yüklenirken hata:', error)
+    } finally {
+      setIsLoading(false)
     }
   }
 
+  const handleUpdateStatus = async (id: string, status: 'approved' | 'rejected' | 'pending') => {
+    try {
+      const result = await updateCommentStatus(id, status)
+      if (result.success) {
+        await loadComments() // Yorumları yeniden yükle
+      } else {
+        console.error('Yorum durumu güncellenirken hata:', result.error)
+        alert('Yorum durumu güncellenirken hata oluştu')
+      }
+    } catch (error) {
+      console.error('Yorum durumu güncellenirken hata:', error)
+      alert('Yorum durumu güncellenirken hata oluştu')
+    }
+  }
+
+  const handleDeleteComment = async (id: string) => {
+    if (confirm('Bu yorumu silmek istediğinizden emin misiniz?')) {
+      try {
+        const result = await deleteComment(id)
+        if (result.success) {
+          await loadComments() // Yorumları yeniden yükle
+        } else {
+          console.error('Yorum silinirken hata:', result.error)
+          alert('Yorum silinirken hata oluştu')
+        }
+      } catch (error) {
+        console.error('Yorum silinirken hata:', error)
+        alert('Yorum silinirken hata oluştu')
+      }
+    }
+  }
+
+  const filteredComments = comments.filter(comment => {
+    if (filter === 'all') return true
+    return comment.status === filter
+  })
+
   const getStatusColor = (status: string) => {
     switch (status) {
-      case 'approved':
-        return 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200'
-      case 'rejected':
-        return 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200'
-      case 'pending':
-        return 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200'
-      default:
-        return 'bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-200'
+      case 'approved': return 'text-green-600 bg-green-100'
+      case 'rejected': return 'text-red-600 bg-red-100'
+      case 'pending': return 'text-yellow-600 bg-yellow-100'
+      default: return 'text-gray-600 bg-gray-100'
     }
   }
 
   const getStatusText = (status: string) => {
     switch (status) {
-      case 'approved':
-        return 'Onaylandı'
-      case 'rejected':
-        return 'Reddedildi'
-      case 'pending':
-        return 'Bekliyor'
-      default:
-        return 'Bilinmiyor'
+      case 'approved': return 'Onaylandı'
+      case 'rejected': return 'Reddedildi'
+      case 'pending': return 'Beklemede'
+      default: return 'Bilinmiyor'
     }
   }
 
@@ -169,233 +125,187 @@ export default function AdminCommentsPage() {
   }
 
   if (!isAuthenticated) {
-    return (
-      <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex items-center justify-center">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-accent"></div>
-      </div>
-    )
-  }
-
-  const stats = {
-    total: comments.length,
-    pending: comments.filter(c => c.status === 'pending').length,
-    approved: comments.filter(c => c.status === 'approved').length,
-    rejected: comments.filter(c => c.status === 'rejected').length
+    return <div>Yetkilendiriliyor...</div>
   }
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
       {/* Header */}
-      <header className="bg-white dark:bg-gray-800 shadow-sm border-b border-gray-200 dark:border-gray-700">
-        <div className="flex items-center justify-between h-16 px-6">
-          <div className="flex items-center">
-            <button
-              onClick={() => router.push('/admin')}
-              className="p-2 rounded-md text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 mr-4"
-            >
-              <ArrowLeft className="w-5 h-5" />
-            </button>
+      <div className="bg-white dark:bg-gray-800 shadow-sm border-b border-gray-200 dark:border-gray-700">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex items-center justify-between h-16">
             <div className="flex items-center">
-              <MessageSquare className="w-6 h-6 text-accent mr-3" />
-              <h1 className="text-xl font-semibold text-gray-900 dark:text-white">
+              <a
+                href="/admin"
+                className="flex items-center text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors duration-200"
+              >
+                <ArrowLeft className="w-5 h-5 mr-2" />
+                Admin Panel
+              </a>
+              <div className="ml-4 h-6 w-px bg-gray-300 dark:bg-gray-600"></div>
+              <h1 className="ml-4 text-xl font-semibold text-gray-900 dark:text-white">
                 Yorum Yönetimi
               </h1>
             </div>
           </div>
         </div>
-      </header>
+      </div>
 
       {/* Main Content */}
-      <main className="p-6">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Stats */}
-        <div className="mb-6 grid grid-cols-1 sm:grid-cols-4 gap-4">
-          <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-4">
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+          <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6">
             <div className="flex items-center">
-              <MessageSquare className="w-8 h-8 text-blue-500 mr-3" />
-              <div>
-                <p className="text-sm text-gray-600 dark:text-gray-400">Toplam Yorum</p>
-                <p className="text-2xl font-bold text-gray-900 dark:text-white">{stats.total}</p>
+              <MessageSquare className="w-8 h-8 text-blue-600" />
+              <div className="ml-4">
+                <p className="text-sm font-medium text-gray-600 dark:text-gray-400">Toplam</p>
+                <p className="text-2xl font-bold text-gray-900 dark:text-white">{comments.length}</p>
               </div>
             </div>
           </div>
-          <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-4">
+          <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6">
             <div className="flex items-center">
-              <Clock className="w-8 h-8 text-yellow-500 mr-3" />
-              <div>
-                <p className="text-sm text-gray-600 dark:text-gray-400">Bekleyen</p>
-                <p className="text-2xl font-bold text-gray-900 dark:text-white">{stats.pending}</p>
+              <Clock className="w-8 h-8 text-yellow-600" />
+              <div className="ml-4">
+                <p className="text-sm font-medium text-gray-600 dark:text-gray-400">Beklemede</p>
+                <p className="text-2xl font-bold text-gray-900 dark:text-white">
+                  {comments.filter(c => c.status === 'pending').length}
+                </p>
               </div>
             </div>
           </div>
-          <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-4">
+          <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6">
             <div className="flex items-center">
-              <Check className="w-8 h-8 text-green-500 mr-3" />
-              <div>
-                <p className="text-sm text-gray-600 dark:text-gray-400">Onaylanan</p>
-                <p className="text-2xl font-bold text-gray-900 dark:text-white">{stats.approved}</p>
+              <Check className="w-8 h-8 text-green-600" />
+              <div className="ml-4">
+                <p className="text-sm font-medium text-gray-600 dark:text-gray-400">Onaylandı</p>
+                <p className="text-2xl font-bold text-gray-900 dark:text-white">
+                  {comments.filter(c => c.status === 'approved').length}
+                </p>
               </div>
             </div>
           </div>
-          <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-4">
+          <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6">
             <div className="flex items-center">
-              <X className="w-8 h-8 text-red-500 mr-3" />
-              <div>
-                <p className="text-sm text-gray-600 dark:text-gray-400">Reddedilen</p>
-                <p className="text-2xl font-bold text-gray-900 dark:text-white">{stats.rejected}</p>
+              <X className="w-8 h-8 text-red-600" />
+              <div className="ml-4">
+                <p className="text-sm font-medium text-gray-600 dark:text-gray-400">Reddedildi</p>
+                <p className="text-2xl font-bold text-gray-900 dark:text-white">
+                  {comments.filter(c => c.status === 'rejected').length}
+                </p>
               </div>
             </div>
           </div>
         </div>
 
-        {/* Filters */}
-        <div className="mb-6 flex flex-col sm:flex-row gap-4">
-          {/* Search */}
-          <div className="relative flex-1">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
-            <input
-              type="text"
-              placeholder="Yorum ara..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full pl-10 pr-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-accent focus:border-transparent"
-            />
-          </div>
-
-          {/* Status Filter */}
-          <div className="relative">
-            <Filter className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
-            <select
-              value={statusFilter}
-              onChange={(e) => setStatusFilter(e.target.value as any)}
-              className="pl-10 pr-8 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-accent focus:border-transparent appearance-none"
-            >
-              <option value="all">Tüm Durumlar</option>
-              <option value="pending">Bekleyen</option>
-              <option value="approved">Onaylanan</option>
-              <option value="rejected">Reddedilen</option>
-            </select>
+        {/* Filter Tabs */}
+        <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 mb-6">
+          <div className="border-b border-gray-200 dark:border-gray-700">
+            <nav className="flex space-x-8 px-6" aria-label="Tabs">
+              {[
+                { key: 'all', label: 'Tümü', count: comments.length },
+                { key: 'pending', label: 'Beklemede', count: comments.filter(c => c.status === 'pending').length },
+                { key: 'approved', label: 'Onaylandı', count: comments.filter(c => c.status === 'approved').length },
+                { key: 'rejected', label: 'Reddedildi', count: comments.filter(c => c.status === 'rejected').length }
+              ].map((tab) => (
+                <button
+                  key={tab.key}
+                  onClick={() => setFilter(tab.key as any)}
+                  className={`py-4 px-1 border-b-2 font-medium text-sm transition-colors duration-200 ${
+                    filter === tab.key
+                      ? 'border-accent text-accent'
+                      : 'border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 hover:border-gray-300 dark:hover:border-gray-600'
+                  }`}
+                >
+                  {tab.label} ({tab.count})
+                </button>
+              ))}
+            </nav>
           </div>
         </div>
 
         {/* Comments List */}
-        <div className="space-y-4">
-          {filteredComments.map((comment) => (
-            <div key={comment.id} className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-6">
-              <div className="flex items-start justify-between mb-4">
-                <div className="flex items-start space-x-4">
-                  <div className="w-10 h-10 bg-accent rounded-full flex items-center justify-center">
-                    <User className="w-5 h-5 text-white" />
-                  </div>
-                  <div>
-                    <h3 className="font-medium text-gray-900 dark:text-white">{comment.name}</h3>
-                    <p className="text-sm text-gray-500 dark:text-gray-400">{comment.email}</p>
-                    <div className="flex items-center mt-1">
-                      <div className="flex mr-2">{renderStars(comment.rating)}</div>
-                      <span className="text-sm text-gray-500 dark:text-gray-400">
-                        ({comment.rating}/5)
-                      </span>
+        <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700">
+          {isLoading ? (
+            <div className="p-8 text-center">
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-accent mx-auto"></div>
+              <p className="mt-2 text-gray-600 dark:text-gray-400">Yorumlar yükleniyor...</p>
+            </div>
+          ) : filteredComments.length === 0 ? (
+            <div className="p-8 text-center">
+              <MessageSquare className="w-12 h-12 text-gray-400 mx-auto mb-4" />
+              <p className="text-gray-600 dark:text-gray-400">Henüz yorum bulunmuyor.</p>
+            </div>
+          ) : (
+            <div className="divide-y divide-gray-200 dark:divide-gray-700">
+              {filteredComments.map((comment) => (
+                <div key={comment.id} className="p-6">
+                  <div className="flex items-start justify-between">
+                    <div className="flex-1">
+                      <div className="flex items-center mb-2">
+                        <User className="w-4 h-4 text-gray-400 mr-2" />
+                        <span className="font-medium text-gray-900 dark:text-white">{comment.name}</span>
+                        <Mail className="w-4 h-4 text-gray-400 ml-4 mr-2" />
+                        <span className="text-sm text-gray-600 dark:text-gray-400">{comment.email}</span>
+                      </div>
+                      
+                      <div className="flex items-center mb-3">
+                        <div className="flex items-center mr-4">
+                          {renderStars(comment.rating)}
+                        </div>
+                        <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getStatusColor(comment.status)}`}>
+                          {getStatusText(comment.status)}
+                        </span>
+                      </div>
+                      
+                      <p className="text-gray-700 dark:text-gray-300 mb-3">{comment.message}</p>
+                      
+                      <p className="text-xs text-gray-500 dark:text-gray-400">
+                        {new Date(comment.created_at).toLocaleDateString('tr-TR', {
+                          year: 'numeric',
+                          month: 'long',
+                          day: 'numeric',
+                          hour: '2-digit',
+                          minute: '2-digit'
+                        })}
+                      </p>
+                    </div>
+                    
+                    <div className="flex items-center space-x-2 ml-4">
+                      {comment.status !== 'approved' && (
+                        <button
+                          onClick={() => handleUpdateStatus(comment.id, 'approved')}
+                          className="p-2 text-green-600 hover:bg-green-100 dark:hover:bg-green-900/20 rounded-lg transition-colors duration-200"
+                          title="Onayla"
+                        >
+                          <Check className="w-4 h-4" />
+                        </button>
+                      )}
+                      {comment.status !== 'rejected' && (
+                        <button
+                          onClick={() => handleUpdateStatus(comment.id, 'rejected')}
+                          className="p-2 text-red-600 hover:bg-red-100 dark:hover:bg-red-900/20 rounded-lg transition-colors duration-200"
+                          title="Reddet"
+                        >
+                          <X className="w-4 h-4" />
+                        </button>
+                      )}
+                      <button
+                        onClick={() => handleDeleteComment(comment.id)}
+                        className="p-2 text-red-600 hover:bg-red-100 dark:hover:bg-red-900/20 rounded-lg transition-colors duration-200"
+                        title="Sil"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </button>
                     </div>
                   </div>
                 </div>
-                <div className="flex items-center space-x-2">
-                  <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getStatusColor(comment.status)}`}>
-                    {getStatusText(comment.status)}
-                  </span>
-                </div>
-              </div>
-
-              <div className="mb-4">
-                <p className="text-gray-700 dark:text-gray-300">{comment.message}</p>
-                {comment.product && (
-                  <p className="text-sm text-gray-500 dark:text-gray-400 mt-2">
-                    Ürün: {comment.product}
-                  </p>
-                )}
-              </div>
-
-              <div className="flex items-center justify-between">
-                <div className="flex items-center text-sm text-gray-500 dark:text-gray-400">
-                  <Calendar className="w-4 h-4 mr-1" />
-                  {new Date(comment.date).toLocaleDateString('tr-TR', {
-                    year: 'numeric',
-                    month: 'long',
-                    day: 'numeric',
-                    hour: '2-digit',
-                    minute: '2-digit'
-                  })}
-                </div>
-
-                <div className="flex items-center space-x-2">
-                  {comment.status === 'pending' && (
-                    <>
-                      <button
-                        onClick={() => updateCommentStatus(comment.id, 'approved')}
-                        className="flex items-center px-3 py-1 text-sm bg-green-100 text-green-700 rounded-lg hover:bg-green-200 dark:bg-green-900 dark:text-green-300 dark:hover:bg-green-800 transition-colors duration-200"
-                      >
-                        <Check className="w-4 h-4 mr-1" />
-                        Onayla
-                      </button>
-                      <button
-                        onClick={() => updateCommentStatus(comment.id, 'rejected')}
-                        className="flex items-center px-3 py-1 text-sm bg-red-100 text-red-700 rounded-lg hover:bg-red-200 dark:bg-red-900 dark:text-red-300 dark:hover:bg-red-800 transition-colors duration-200"
-                      >
-                        <X className="w-4 h-4 mr-1" />
-                        Reddet
-                      </button>
-                    </>
-                  )}
-                  {comment.status === 'approved' && (
-                    <button
-                      onClick={() => updateCommentStatus(comment.id, 'rejected')}
-                      className="flex items-center px-3 py-1 text-sm bg-red-100 text-red-700 rounded-lg hover:bg-red-200 dark:bg-red-900 dark:text-red-300 dark:hover:bg-red-800 transition-colors duration-200"
-                    >
-                      <X className="w-4 h-4 mr-1" />
-                      Reddet
-                    </button>
-                  )}
-                  {comment.status === 'rejected' && (
-                    <button
-                      onClick={() => updateCommentStatus(comment.id, 'approved')}
-                      className="flex items-center px-3 py-1 text-sm bg-green-100 text-green-700 rounded-lg hover:bg-green-200 dark:bg-green-900 dark:text-green-300 dark:hover:bg-green-800 transition-colors duration-200"
-                    >
-                      <Check className="w-4 h-4 mr-1" />
-                      Onayla
-                    </button>
-                  )}
-                  <button
-                    onClick={() => deleteComment(comment.id)}
-                    className="flex items-center px-3 py-1 text-sm bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 dark:bg-gray-700 dark:text-gray-300 dark:hover:bg-gray-600 transition-colors duration-200"
-                  >
-                    <Trash2 className="w-4 h-4 mr-1" />
-                    Sil
-                  </button>
-                </div>
-              </div>
+              ))}
             </div>
-          ))}
+          )}
         </div>
-
-        {filteredComments.length === 0 && (
-          <div className="text-center py-12">
-            <MessageSquare className="w-16 h-16 text-gray-400 mx-auto mb-4" />
-            <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2">
-              Yorum bulunamadı
-            </h3>
-            <p className="text-gray-500 dark:text-gray-400 mb-4">
-              Arama kriterlerinize uygun yorum bulunamadı.
-            </p>
-            <button
-              onClick={() => {
-                setSearchTerm('')
-                setStatusFilter('all')
-              }}
-              className="text-accent hover:text-accent/80"
-            >
-              Filtreleri temizle
-            </button>
-          </div>
-        )}
-      </main>
+      </div>
     </div>
   )
 }

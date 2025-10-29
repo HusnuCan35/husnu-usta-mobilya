@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react'
 import { Star, ChevronLeft, ChevronRight, Quote } from 'lucide-react'
 import { testimonials as defaultTestimonials } from '@/data/testimonials'
+import { getComments } from '@/lib/actions'
 
 interface ApiTestimonial {
   id: string
@@ -20,15 +21,14 @@ export function TestimonialsSection() {
   const [testimonials, setTestimonials] = useState(defaultTestimonials)
   const [isLoading, setIsLoading] = useState(true)
 
-  // Load testimonials from API
+  // Load testimonials from server action
   useEffect(() => {
     const loadTestimonials = async () => {
       try {
-        const response = await fetch('/api/comments')
-        const result = await response.json()
+        const result = await getComments()
         
         if (result.success && result.data && Array.isArray(result.data)) {
-          // API'den gelen verileri component formatına çevir
+          // Server action'dan gelen verileri component formatına çevir
           const apiTestimonials = result.data
             .filter((item: ApiTestimonial) => item.approved)
             .map((item: ApiTestimonial) => ({
@@ -57,151 +57,181 @@ export function TestimonialsSection() {
   }, [])
 
   const nextTestimonial = () => {
-    setCurrentIndex((prev) => (prev + 1) % testimonials.length)
+    setCurrentIndex((prevIndex) => 
+      prevIndex === testimonials.length - 1 ? 0 : prevIndex + 1
+    )
   }
 
   const prevTestimonial = () => {
-    setCurrentIndex((prev) => (prev - 1 + testimonials.length) % testimonials.length)
+    setCurrentIndex((prevIndex) => 
+      prevIndex === 0 ? testimonials.length - 1 : prevIndex - 1
+    )
+  }
+
+  const goToTestimonial = (index: number) => {
+    setCurrentIndex(index)
+  }
+
+  // Auto-advance testimonials
+  useEffect(() => {
+    const interval = setInterval(nextTestimonial, 6000)
+    return () => clearInterval(interval)
+  }, [testimonials.length])
+
+  const renderStars = (rating: number) => {
+    return Array.from({ length: 5 }, (_, i) => (
+      <Star
+        key={i}
+        className={`w-5 h-5 ${
+          i < rating 
+            ? 'text-yellow-400 fill-current' 
+            : 'text-gray-300 dark:text-gray-600'
+        }`}
+      />
+    ))
+  }
+
+  if (isLoading) {
+    return (
+      <section className="py-16 bg-white dark:bg-gray-800">
+        <div className="container mx-auto px-4">
+          <div className="text-center mb-12">
+            <h2 className="text-3xl md:text-4xl font-bold text-gray-900 dark:text-white mb-4">
+              Müşteri Yorumları
+            </h2>
+            <p className="text-lg text-gray-600 dark:text-gray-300 max-w-2xl mx-auto">
+              Memnun müşterilerimizin deneyimleri
+            </p>
+          </div>
+          <div className="max-w-4xl mx-auto">
+            <div className="bg-gray-100 dark:bg-gray-700 rounded-2xl p-8 animate-pulse">
+              <div className="h-6 bg-gray-200 dark:bg-gray-600 rounded mb-4"></div>
+              <div className="h-4 bg-gray-200 dark:bg-gray-600 rounded mb-2"></div>
+              <div className="h-4 bg-gray-200 dark:bg-gray-600 rounded w-3/4"></div>
+            </div>
+          </div>
+        </div>
+      </section>
+    )
+  }
+
+  if (testimonials.length === 0) {
+    return null
   }
 
   const currentTestimonial = testimonials[currentIndex]
 
   return (
-    <section className="py-16 bg-primary/5 dark:bg-gray-900/50">
+    <section className="py-16 bg-white dark:bg-gray-800">
       <div className="container mx-auto px-4">
-        {/* Section Header */}
         <div className="text-center mb-12">
-          <h2 className="text-3xl md:text-4xl font-serif font-bold text-text-primary dark:text-white mb-4">
+          <h2 className="text-3xl md:text-4xl font-bold text-gray-900 dark:text-white mb-4">
             Müşteri Yorumları
           </h2>
-          <p className="text-lg text-text-secondary dark:text-gray-300 max-w-2xl mx-auto">
-            Binlerce mutlu müşterimizin deneyimlerini keşfedin
+          <p className="text-lg text-gray-600 dark:text-gray-300 max-w-2xl mx-auto">
+            50 yılı aşkın deneyimimizle binlerce memnun müşteriye hizmet verdik
           </p>
         </div>
 
-        {/* Main Testimonial */}
         <div className="max-w-4xl mx-auto">
-          <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl p-8 md:p-12 relative">
-            {/* Quote Icon */}
-            <div className="absolute top-6 left-6 w-12 h-12 bg-accent/10 rounded-full flex items-center justify-center">
-              <Quote className="w-6 h-6 text-accent" />
-            </div>
-
-            {/* Content */}
-            <div className="pt-8">
-              {/* Stars */}
-              <div className="flex items-center justify-center mb-6">
-                {[...Array(5)].map((_, i) => (
-                  <Star
-                    key={i}
-                    className={`w-6 h-6 ${
-                      i < currentTestimonial.rating
-                        ? 'text-yellow-400 fill-current'
-                        : 'text-gray-300'
-                    }`}
-                  />
-                ))}
+          <div className="relative">
+            {/* Main Testimonial Card */}
+            <div className="bg-gray-50 dark:bg-gray-900 rounded-2xl p-8 md:p-12 shadow-lg">
+              {/* Quote Icon */}
+              <div className="flex justify-center mb-6">
+                <Quote className="w-12 h-12 text-accent opacity-50" />
               </div>
 
-              {/* Testimonial Text */}
-              <blockquote className="text-lg md:text-xl text-text-primary dark:text-white text-center leading-relaxed mb-8 font-medium">
-                "{currentTestimonial.content}"
-              </blockquote>
+              {/* Testimonial Content */}
+              <div className="text-center">
+                <blockquote className="text-lg md:text-xl text-gray-700 dark:text-gray-300 mb-6 leading-relaxed">
+                  "{currentTestimonial.content}"
+                </blockquote>
 
-              {/* Customer Info */}
-              <div className="flex items-center justify-center space-x-4">
-                <div className="w-16 h-16 bg-gradient-to-br from-accent to-primary rounded-full flex items-center justify-center">
-                  <span className="text-white font-bold text-lg">
-                    {currentTestimonial.name.charAt(0)}
-                  </span>
+                {/* Rating */}
+                <div className="flex justify-center mb-6">
+                  {renderStars(currentTestimonial.rating)}
                 </div>
-                <div className="text-center">
-                  <div className="font-semibold text-text-primary dark:text-white">
-                    {currentTestimonial.name}
-                  </div>
-                  <div className="text-sm text-text-secondary dark:text-gray-300">
-                    {currentTestimonial.location}
+
+                {/* Author Info */}
+                <div className="flex items-center justify-center space-x-4">
+                  <img
+                    src={currentTestimonial.image}
+                    alt={currentTestimonial.name}
+                    className="w-16 h-16 rounded-full object-cover border-4 border-white dark:border-gray-700 shadow-lg"
+                  />
+                  <div className="text-left">
+                    <h4 className="font-semibold text-gray-900 dark:text-white">
+                      {currentTestimonial.name}
+                    </h4>
+                    <p className="text-gray-600 dark:text-gray-400">
+                      {currentTestimonial.role}
+                    </p>
+                    {currentTestimonial.location && (
+                      <p className="text-sm text-gray-500 dark:text-gray-500">
+                        {currentTestimonial.location}
+                      </p>
+                    )}
                   </div>
                 </div>
               </div>
             </div>
 
-            {/* Navigation Buttons */}
-            <div className="flex items-center justify-between mt-8">
-              <button
-                onClick={prevTestimonial}
-                className="p-3 rounded-full bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors"
-                aria-label="Previous testimonial"
-              >
-                <ChevronLeft className="w-5 h-5 text-gray-600 dark:text-gray-300" />
-              </button>
+            {/* Navigation Arrows */}
+            {testimonials.length > 1 && (
+              <>
+                <button
+                  onClick={prevTestimonial}
+                  className="absolute left-4 top-1/2 transform -translate-y-1/2 bg-white dark:bg-gray-700 text-gray-800 dark:text-white p-3 rounded-full shadow-lg hover:shadow-xl transition-all duration-200 hover:scale-110"
+                  aria-label="Önceki yorum"
+                >
+                  <ChevronLeft className="w-6 h-6" />
+                </button>
+                
+                <button
+                  onClick={nextTestimonial}
+                  className="absolute right-4 top-1/2 transform -translate-y-1/2 bg-white dark:bg-gray-700 text-gray-800 dark:text-white p-3 rounded-full shadow-lg hover:shadow-xl transition-all duration-200 hover:scale-110"
+                  aria-label="Sonraki yorum"
+                >
+                  <ChevronRight className="w-6 h-6" />
+                </button>
+              </>
+            )}
+          </div>
 
-              {/* Dots Indicator */}
-              <div className="flex space-x-2">
-                {testimonials.map((_, index) => (
-                  <button
-                    key={index}
-                    onClick={() => setCurrentIndex(index)}
-                    className={`w-3 h-3 rounded-full transition-colors ${
-                      index === currentIndex
-                        ? 'bg-accent'
-                        : 'bg-gray-300 dark:bg-gray-600'
-                    }`}
-                    aria-label={`Go to testimonial ${index + 1}`}
-                  />
-                ))}
-              </div>
+          {/* Dots Indicator */}
+          {testimonials.length > 1 && (
+            <div className="flex justify-center mt-8 space-x-2">
+              {testimonials.map((_, index) => (
+                <button
+                  key={index}
+                  onClick={() => goToTestimonial(index)}
+                  className={`w-3 h-3 rounded-full transition-all duration-200 ${
+                    index === currentIndex
+                      ? 'bg-accent scale-125'
+                      : 'bg-gray-300 dark:bg-gray-600 hover:bg-accent hover:scale-110'
+                  }`}
+                  aria-label={`${index + 1}. yoruma git`}
+                />
+              ))}
+            </div>
+          )}
 
-              <button
-                onClick={nextTestimonial}
-                className="p-3 rounded-full bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors"
-                aria-label="Next testimonial"
-              >
-                <ChevronRight className="w-5 h-5 text-gray-600 dark:text-gray-300" />
-              </button>
+          {/* Stats */}
+          <div className="mt-12 grid grid-cols-1 md:grid-cols-3 gap-8">
+            <div className="text-center">
+              <div className="text-3xl font-bold text-accent mb-2">1000+</div>
+              <div className="text-gray-600 dark:text-gray-400">Memnun Müşteri</div>
+            </div>
+            <div className="text-center">
+              <div className="text-3xl font-bold text-accent mb-2">50+</div>
+              <div className="text-gray-600 dark:text-gray-400">Yıl Deneyim</div>
+            </div>
+            <div className="text-center">
+              <div className="text-3xl font-bold text-accent mb-2">4.9</div>
+              <div className="text-gray-600 dark:text-gray-400">Ortalama Puan</div>
             </div>
           </div>
-        </div>
-
-        {/* Additional Testimonials Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mt-12">
-          {testimonials.slice(0, 3).map((testimonial, index) => (
-            <div
-              key={testimonial.id}
-              className="bg-white dark:bg-gray-800 rounded-xl p-6 shadow-lg hover:shadow-xl transition-shadow"
-            >
-              <div className="flex items-center mb-4">
-                {[...Array(5)].map((_, i) => (
-                  <Star
-                    key={i}
-                    className={`w-4 h-4 ${
-                      i < testimonial.rating
-                        ? 'text-yellow-400 fill-current'
-                        : 'text-gray-300'
-                    }`}
-                  />
-                ))}
-              </div>
-              <p className="text-sm text-text-secondary dark:text-gray-300 mb-4 line-clamp-3">
-                "{testimonial.content}"
-              </p>
-              <div className="flex items-center space-x-3">
-                <div className="w-10 h-10 bg-gradient-to-br from-accent to-primary rounded-full flex items-center justify-center">
-                  <span className="text-white font-semibold text-sm">
-                    {testimonial.name.charAt(0)}
-                  </span>
-                </div>
-                <div>
-                  <div className="font-medium text-text-primary dark:text-white text-sm">
-                    {testimonial.name}
-                  </div>
-                  <div className="text-xs text-text-secondary dark:text-gray-400">
-                    {testimonial.location}
-                  </div>
-                </div>
-              </div>
-            </div>
-          ))}
         </div>
       </div>
     </section>

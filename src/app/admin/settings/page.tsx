@@ -15,6 +15,7 @@ import {
   Twitter,
   Linkedin
 } from 'lucide-react'
+import { getSiteSettings, updateSiteSettings } from '@/lib/actions'
 
 export default function AdminSettingsPage() {
   const [isAuthenticated, setIsAuthenticated] = useState(false)
@@ -42,18 +43,17 @@ export default function AdminSettingsPage() {
     const auth = localStorage.getItem('adminAuth')
     if (auth === 'true') {
       setIsAuthenticated(true)
-      // Edge Config'den ayarları yükle
-      loadSettingsFromEdgeConfig()
+      // Supabase'den ayarları yükle
+      loadSettingsFromSupabase()
     } else {
       router.push('/admin/login')
     }
   }, [router])
 
-  // Edge Config'den ayarları yükle
-  const loadSettingsFromEdgeConfig = async () => {
+  // Supabase'den ayarları yükle
+  const loadSettingsFromSupabase = async () => {
     try {
-      const response = await fetch('/api/site-settings')
-      const result = await response.json()
+      const result = await getSiteSettings()
       
       if (result.success && result.data) {
         setSettings({
@@ -72,7 +72,7 @@ export default function AdminSettingsPage() {
         })
       }
     } catch (error) {
-      console.error('Edge Config ayarları yüklenirken hata:', error)
+      console.error('Supabase ayarları yüklenirken hata:', error)
       // Hata durumunda varsayılan ayarları kullan
     }
   }
@@ -101,23 +101,15 @@ export default function AdminSettingsPage() {
     setSuccessMessage('')
 
     try {
-      // Ayarları API'ye gönder
-      const response = await fetch('/api/site-settings', {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(settings)
-      })
-
-      const result = await response.json()
+      // Ayarları server action ile güncelle
+      const result = await updateSiteSettings(settings)
 
       if (result.success) {
         // Başarı mesajı göster
-        setSuccessMessage('Ayarlar başarıyla kaydedildi ve Edge Config\'e gönderildi!')
+        setSuccessMessage('Ayarlar başarıyla kaydedildi!')
         
         // Ayarları yeniden yükle
-        await loadSettingsFromEdgeConfig()
+        await loadSettingsFromSupabase()
       } else {
         throw new Error(result.error || 'Ayarlar kaydedilemedi')
       }
@@ -161,27 +153,42 @@ export default function AdminSettingsPage() {
               </h1>
             </div>
           </div>
+          
+          <button
+            onClick={handleSubmit}
+            disabled={isLoading}
+            className="flex items-center px-4 py-2 bg-accent text-white rounded-lg hover:bg-accent/90 disabled:opacity-50 disabled:cursor-not-allowed transition-colors duration-200"
+          >
+            <Save className="w-4 h-4 mr-2" />
+            {isLoading ? 'Kaydediliyor...' : 'Kaydet'}
+          </button>
         </div>
       </header>
 
-      {/* Main Content */}
-      <main className="max-w-4xl mx-auto p-6">
-        {/* Success Message */}
-        {successMessage && (
-          <div className="mb-6 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-xl p-4">
-            <p className="text-sm text-green-600 dark:text-green-400">{successMessage}</p>
-          </div>
-        )}
+      {/* Success Message */}
+      {successMessage && (
+        <div className={`mx-6 mt-4 p-4 rounded-lg ${
+          successMessage.includes('Hata') 
+            ? 'bg-red-100 border border-red-400 text-red-700' 
+            : 'bg-green-100 border border-green-400 text-green-700'
+        }`}>
+          {successMessage}
+        </div>
+      )}
 
-        <form onSubmit={handleSubmit} className="space-y-8">
+      {/* Main Content */}
+      <main className="p-6">
+        <form onSubmit={handleSubmit} className="max-w-4xl mx-auto space-y-8">
           {/* Genel Bilgiler */}
-          <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6">
-            <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-6 flex items-center">
-              <Globe className="w-5 h-5 mr-2 text-accent" />
-              Genel Site Bilgileri
-            </h2>
+          <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-6">
+            <div className="flex items-center mb-6">
+              <Globe className="w-5 h-5 text-accent mr-2" />
+              <h2 className="text-lg font-semibold text-gray-900 dark:text-white">
+                Genel Bilgiler
+              </h2>
+            </div>
             
-            <div className="grid grid-cols-1 gap-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div>
                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                   Site Adı
@@ -190,33 +197,33 @@ export default function AdminSettingsPage() {
                   type="text"
                   value={settings.siteName}
                   onChange={(e) => handleInputChange('siteName', e.target.value)}
-                  className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-xl bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-accent focus:border-transparent"
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-accent focus:border-transparent"
                   placeholder="Site adını girin"
                 />
               </div>
-
+              
               <div>
                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                  Site Başlığı (Title)
+                  Site Başlığı
                 </label>
                 <input
                   type="text"
                   value={settings.siteTitle}
                   onChange={(e) => handleInputChange('siteTitle', e.target.value)}
-                  className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-xl bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-accent focus:border-transparent"
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-accent focus:border-transparent"
                   placeholder="Site başlığını girin"
                 />
               </div>
-
-              <div>
+              
+              <div className="md:col-span-2">
                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                   Site Açıklaması
                 </label>
                 <textarea
                   value={settings.siteDescription}
                   onChange={(e) => handleInputChange('siteDescription', e.target.value)}
-                  rows={4}
-                  className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-xl bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-accent focus:border-transparent"
+                  rows={3}
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-accent focus:border-transparent"
                   placeholder="Site açıklamasını girin"
                 />
               </div>
@@ -224,11 +231,13 @@ export default function AdminSettingsPage() {
           </div>
 
           {/* İletişim Bilgileri */}
-          <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6">
-            <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-6 flex items-center">
-              <Phone className="w-5 h-5 mr-2 text-accent" />
-              İletişim Bilgileri
-            </h2>
+          <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-6">
+            <div className="flex items-center mb-6">
+              <Mail className="w-5 h-5 text-accent mr-2" />
+              <h2 className="text-lg font-semibold text-gray-900 dark:text-white">
+                İletişim Bilgileri
+              </h2>
+            </div>
             
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div>
@@ -240,11 +249,11 @@ export default function AdminSettingsPage() {
                   type="email"
                   value={settings.contactEmail}
                   onChange={(e) => handleInputChange('contactEmail', e.target.value)}
-                  className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-xl bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-accent focus:border-transparent"
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-accent focus:border-transparent"
                   placeholder="E-posta adresini girin"
                 />
               </div>
-
+              
               <div>
                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                   <Phone className="w-4 h-4 inline mr-1" />
@@ -254,11 +263,11 @@ export default function AdminSettingsPage() {
                   type="tel"
                   value={settings.contactPhone}
                   onChange={(e) => handleInputChange('contactPhone', e.target.value)}
-                  className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-xl bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-accent focus:border-transparent"
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-accent focus:border-transparent"
                   placeholder="Telefon numarasını girin"
                 />
               </div>
-
+              
               <div className="md:col-span-2">
                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                   <MapPin className="w-4 h-4 inline mr-1" />
@@ -267,8 +276,8 @@ export default function AdminSettingsPage() {
                 <textarea
                   value={settings.address}
                   onChange={(e) => handleInputChange('address', e.target.value)}
-                  rows={3}
-                  className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-xl bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-accent focus:border-transparent"
+                  rows={2}
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-accent focus:border-transparent"
                   placeholder="Adres bilgisini girin"
                 />
               </div>
@@ -276,10 +285,13 @@ export default function AdminSettingsPage() {
           </div>
 
           {/* Sosyal Medya */}
-          <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6">
-            <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-6">
-              Sosyal Medya Hesapları
-            </h2>
+          <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-6">
+            <div className="flex items-center mb-6">
+              <Instagram className="w-5 h-5 text-accent mr-2" />
+              <h2 className="text-lg font-semibold text-gray-900 dark:text-white">
+                Sosyal Medya Hesapları
+              </h2>
+            </div>
             
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div>
@@ -291,11 +303,11 @@ export default function AdminSettingsPage() {
                   type="url"
                   value={settings.socialMedia.facebook}
                   onChange={(e) => handleInputChange('socialMedia.facebook', e.target.value)}
-                  className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-xl bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-accent focus:border-transparent"
-                  placeholder="https://facebook.com/..."
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-accent focus:border-transparent"
+                  placeholder="Facebook profil URL'si"
                 />
               </div>
-
+              
               <div>
                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                   <Instagram className="w-4 h-4 inline mr-1" />
@@ -305,11 +317,11 @@ export default function AdminSettingsPage() {
                   type="url"
                   value={settings.socialMedia.instagram}
                   onChange={(e) => handleInputChange('socialMedia.instagram', e.target.value)}
-                  className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-xl bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-accent focus:border-transparent"
-                  placeholder="https://instagram.com/..."
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-accent focus:border-transparent"
+                  placeholder="Instagram profil URL'si"
                 />
               </div>
-
+              
               <div>
                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                   <Twitter className="w-4 h-4 inline mr-1" />
@@ -319,11 +331,11 @@ export default function AdminSettingsPage() {
                   type="url"
                   value={settings.socialMedia.twitter}
                   onChange={(e) => handleInputChange('socialMedia.twitter', e.target.value)}
-                  className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-xl bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-accent focus:border-transparent"
-                  placeholder="https://twitter.com/..."
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-accent focus:border-transparent"
+                  placeholder="Twitter profil URL'si"
                 />
               </div>
-
+              
               <div>
                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                   <Linkedin className="w-4 h-4 inline mr-1" />
@@ -333,8 +345,8 @@ export default function AdminSettingsPage() {
                   type="url"
                   value={settings.socialMedia.linkedin}
                   onChange={(e) => handleInputChange('socialMedia.linkedin', e.target.value)}
-                  className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-xl bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-accent focus:border-transparent"
-                  placeholder="https://linkedin.com/..."
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-accent focus:border-transparent"
+                  placeholder="LinkedIn profil URL'si"
                 />
               </div>
             </div>
@@ -345,13 +357,9 @@ export default function AdminSettingsPage() {
             <button
               type="submit"
               disabled={isLoading}
-              className="flex items-center px-6 py-3 bg-accent text-white rounded-xl hover:bg-accent/90 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-accent disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200"
+              className="flex items-center px-6 py-3 bg-accent text-white rounded-lg hover:bg-accent/90 disabled:opacity-50 disabled:cursor-not-allowed transition-colors duration-200"
             >
-              {isLoading ? (
-                <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin mr-2" />
-              ) : (
-                <Save className="w-5 h-5 mr-2" />
-              )}
+              <Save className="w-4 h-4 mr-2" />
               {isLoading ? 'Kaydediliyor...' : 'Ayarları Kaydet'}
             </button>
           </div>

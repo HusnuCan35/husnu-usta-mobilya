@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { ChevronLeft, ChevronRight } from 'lucide-react'
+import { getGalleryImages } from '@/lib/actions'
 
 interface GalleryImage {
   id: string
@@ -32,15 +33,14 @@ export function PhotoGallery() {
   const [galleryImages, setGalleryImages] = useState<string[]>(defaultGalleryImages)
   const [isLoading, setIsLoading] = useState(true)
 
-  // Load gallery images from API
+  // Load gallery images from server action
   useEffect(() => {
     const loadGalleryImages = async () => {
       try {
-        const response = await fetch('/api/gallery')
-        const result = await response.json()
+        const result = await getGalleryImages()
         
         if (result.success && result.data && Array.isArray(result.data)) {
-          // API'den gelen verileri string array'e çevir
+          // Server action'dan gelen verileri string array'e çevir
           const imageUrls = result.data.map((img: GalleryImage) => img.src)
           setGalleryImages(imageUrls)
         } else {
@@ -61,7 +61,7 @@ export function PhotoGallery() {
 
   // Auto-play functionality
   useEffect(() => {
-    if (!isAutoPlaying || isLoading) return
+    if (!isAutoPlaying || galleryImages.length <= 1) return
 
     const interval = setInterval(() => {
       setCurrentIndex((prevIndex) => 
@@ -70,7 +70,7 @@ export function PhotoGallery() {
     }, 4000)
 
     return () => clearInterval(interval)
-  }, [isAutoPlaying, isLoading, galleryImages.length])
+  }, [isAutoPlaying, galleryImages.length])
 
   const goToPrevious = () => {
     setCurrentIndex(currentIndex === 0 ? galleryImages.length - 1 : currentIndex - 1)
@@ -84,47 +84,60 @@ export function PhotoGallery() {
     setCurrentIndex(index)
   }
 
+  if (isLoading) {
+    return (
+      <section className="py-16 bg-gray-50 dark:bg-gray-900">
+        <div className="container mx-auto px-4">
+          <div className="text-center mb-12">
+            <h2 className="text-3xl md:text-4xl font-bold text-gray-900 dark:text-white mb-4">
+              Çalışmalarımız
+            </h2>
+            <p className="text-lg text-gray-600 dark:text-gray-300 max-w-2xl mx-auto">
+              50 yılı aşkın deneyimimizle ürettiğimiz kaliteli mobilyalardan örnekler
+            </p>
+          </div>
+          <div className="relative max-w-6xl mx-auto">
+            <div className="aspect-[16/9] bg-gray-200 dark:bg-gray-700 rounded-2xl animate-pulse flex items-center justify-center">
+              <div className="text-gray-400 dark:text-gray-500">Galeri yükleniyor...</div>
+            </div>
+          </div>
+        </div>
+      </section>
+    )
+  }
+
   return (
-    <section id="foto-galeri" className="py-16 bg-gradient-to-br from-gray-50 to-white dark:from-gray-900 dark:to-gray-800">
+    <section className="py-16 bg-gray-50 dark:bg-gray-900">
       <div className="container mx-auto px-4">
-        {/* Header */}
         <div className="text-center mb-12">
-          <h2 className="text-4xl font-bold text-gray-900 dark:text-white mb-4">
-            Foto Galeri
+          <h2 className="text-3xl md:text-4xl font-bold text-gray-900 dark:text-white mb-4">
+            Çalışmalarımız
           </h2>
           <p className="text-lg text-gray-600 dark:text-gray-300 max-w-2xl mx-auto">
-            El işçiliği ile üretilen mobilyalarımızdan örnekler
+            50 yılı aşkın deneyimimizle ürettiğimiz kaliteli mobilyalardan örnekler
           </p>
         </div>
 
-        {/* Carousel Container */}
-        <div 
-          className="relative max-w-6xl mx-auto"
-          onMouseEnter={() => setIsAutoPlaying(false)}
-          onMouseLeave={() => setIsAutoPlaying(true)}
-        >
-          {/* Main Image Display */}
-          <div className="relative h-[500px] md:h-[600px] rounded-2xl overflow-hidden shadow-2xl">
-            <div 
-              className="flex transition-transform duration-700 ease-in-out h-full"
-              style={{ transform: `translateX(-${currentIndex * 100}%)` }}
-            >
-              {galleryImages.map((image, index) => (
-                <div key={index} className="w-full h-full flex-shrink-0 relative">
-                  <img
-                    src={image}
-                    alt={`Mobilya galeri ${index + 1}`}
-                    className="w-full h-full object-cover"
-                  />
-                  <div className="absolute inset-0 bg-black/10 hover:bg-black/5 transition-colors duration-300" />
-                </div>
-              ))}
-            </div>
-
+        <div className="relative max-w-6xl mx-auto">
+          {/* Main Image */}
+          <div 
+            className="relative aspect-[16/9] rounded-2xl overflow-hidden shadow-2xl cursor-pointer group"
+            onMouseEnter={() => setIsAutoPlaying(false)}
+            onMouseLeave={() => setIsAutoPlaying(true)}
+          >
+            <img
+              src={galleryImages[currentIndex]}
+              alt={`Galeri resmi ${currentIndex + 1}`}
+              className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
+            />
+            
+            {/* Overlay */}
+            <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-20 transition-all duration-300" />
+            
             {/* Navigation Arrows */}
             <button
               onClick={goToPrevious}
-              className="absolute left-4 top-1/2 -translate-y-1/2 bg-white/90 hover:bg-white dark:bg-gray-800/90 dark:hover:bg-gray-800 text-gray-800 dark:text-white p-3 rounded-full shadow-lg transition-all duration-300 hover:scale-110 backdrop-blur-sm"
+              className="absolute left-4 top-1/2 transform -translate-y-1/2 bg-white bg-opacity-80 hover:bg-opacity-100 text-gray-800 p-3 rounded-full shadow-lg transition-all duration-200 opacity-0 group-hover:opacity-100"
               aria-label="Önceki resim"
             >
               <ChevronLeft className="w-6 h-6" />
@@ -132,71 +145,64 @@ export function PhotoGallery() {
             
             <button
               onClick={goToNext}
-              className="absolute right-4 top-1/2 -translate-y-1/2 bg-white/90 hover:bg-white dark:bg-gray-800/90 dark:hover:bg-gray-800 text-gray-800 dark:text-white p-3 rounded-full shadow-lg transition-all duration-300 hover:scale-110 backdrop-blur-sm"
+              className="absolute right-4 top-1/2 transform -translate-y-1/2 bg-white bg-opacity-80 hover:bg-opacity-100 text-gray-800 p-3 rounded-full shadow-lg transition-all duration-200 opacity-0 group-hover:opacity-100"
               aria-label="Sonraki resim"
             >
               <ChevronRight className="w-6 h-6" />
             </button>
+
+            {/* Image Counter */}
+            <div className="absolute top-4 right-4 bg-black bg-opacity-50 text-white px-3 py-1 rounded-full text-sm">
+              {currentIndex + 1} / {galleryImages.length}
+            </div>
+          </div>
+
+          {/* Thumbnail Navigation */}
+          <div className="flex justify-center mt-6 space-x-2 overflow-x-auto pb-2">
+            {galleryImages.map((image, index) => (
+              <button
+                key={index}
+                onClick={() => goToSlide(index)}
+                className={`flex-shrink-0 w-16 h-16 md:w-20 md:h-20 rounded-lg overflow-hidden border-2 transition-all duration-200 ${
+                  index === currentIndex
+                    ? 'border-accent shadow-lg scale-110'
+                    : 'border-gray-300 dark:border-gray-600 hover:border-accent hover:scale-105'
+                }`}
+              >
+                <img
+                  src={image}
+                  alt={`Küçük resim ${index + 1}`}
+                  className="w-full h-full object-cover"
+                />
+              </button>
+            ))}
           </div>
 
           {/* Dots Indicator */}
-          <div className="flex justify-center mt-8 space-x-2">
+          <div className="flex justify-center mt-4 space-x-2">
             {galleryImages.map((_, index) => (
               <button
                 key={index}
                 onClick={() => goToSlide(index)}
-                className={`w-3 h-3 rounded-full transition-all duration-300 ${
+                className={`w-3 h-3 rounded-full transition-all duration-200 ${
                   index === currentIndex
-                    ? 'bg-amber-600 scale-125'
-                    : 'bg-gray-300 dark:bg-gray-600 hover:bg-gray-400 dark:hover:bg-gray-500'
+                    ? 'bg-accent scale-125'
+                    : 'bg-gray-300 dark:bg-gray-600 hover:bg-accent hover:scale-110'
                 }`}
                 aria-label={`${index + 1}. resme git`}
               />
             ))}
           </div>
-
-          {/* Thumbnail Preview */}
-          <div className="mt-8 hidden md:block">
-            <div className="flex justify-center space-x-2 overflow-x-auto pb-2">
-              {galleryImages.map((image, index) => (
-                <button
-                  key={index}
-                  onClick={() => goToSlide(index)}
-                  className={`flex-shrink-0 w-20 h-20 rounded-lg overflow-hidden transition-all duration-300 ${
-                    index === currentIndex
-                      ? 'ring-4 ring-amber-500 scale-105'
-                      : 'opacity-70 hover:opacity-100'
-                  }`}
-                >
-                  <img
-                    src={image}
-                    alt={`Küçük resim ${index + 1}`}
-                    className="w-full h-full object-cover"
-                  />
-                </button>
-              ))}
-            </div>
-          </div>
         </div>
 
-        {/* Gallery Stats */}
-        <div className="mt-12 text-center">
-          <div className="inline-flex items-center space-x-8 bg-white dark:bg-gray-800 rounded-2xl px-8 py-4 shadow-lg">
-            <div className="text-center">
-              <div className="text-2xl font-bold text-amber-600">{galleryImages.length}</div>
-              <div className="text-sm text-gray-600 dark:text-gray-300">Fotoğraf</div>
-            </div>
-            <div className="w-px h-8 bg-gray-200 dark:bg-gray-600"></div>
-            <div className="text-center">
-              <div className="text-2xl font-bold text-amber-600">100%</div>
-              <div className="text-sm text-gray-600 dark:text-gray-300">El İşçiliği</div>
-            </div>
-            <div className="w-px h-8 bg-gray-200 dark:bg-gray-600"></div>
-            <div className="text-center">
-              <div className="text-2xl font-bold text-amber-600">53+</div>
-              <div className="text-sm text-gray-600 dark:text-gray-300">Yıl Tecrübe</div>
-            </div>
-          </div>
+        {/* Auto-play Control */}
+        <div className="text-center mt-8">
+          <button
+            onClick={() => setIsAutoPlaying(!isAutoPlaying)}
+            className="text-sm text-gray-600 dark:text-gray-400 hover:text-accent transition-colors duration-200"
+          >
+            {isAutoPlaying ? 'Otomatik geçişi durdur' : 'Otomatik geçişi başlat'}
+          </button>
         </div>
       </div>
     </section>

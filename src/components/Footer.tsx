@@ -3,6 +3,7 @@
 import Link from 'next/link'
 import { Phone, Mail, MapPin, Facebook, Instagram } from 'lucide-react'
 import { useState, useEffect } from 'react'
+import { getSiteSettings } from '@/lib/actions'
 
 interface SiteSettings {
   siteName: string
@@ -33,12 +34,11 @@ export function Footer() {
     }
   })
 
-  // Load site settings from API
+  // Load site settings from server action
   useEffect(() => {
     const loadSiteSettings = async () => {
       try {
-        const response = await fetch('/api/site-settings')
-        const result = await response.json()
+        const result = await getSiteSettings()
         
         if (result.success && result.data) {
           setSiteSettings({
@@ -63,6 +63,7 @@ export function Footer() {
 
     loadSiteSettings()
   }, [])
+  
   return (
     <footer className="bg-gray-900 text-white">
       <div className="container mx-auto px-4 py-12">
